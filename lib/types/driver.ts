@@ -136,3 +136,9 @@ export interface DriverProfile extends DriverStats {
   careerHighlights: string[];
   strengths: string[];
 }
+
+export interface DriverRaceResult extends Result {
+  season: string;
+  round: string;
+  raceName: string;
+}

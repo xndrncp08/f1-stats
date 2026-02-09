@@ -1,7 +1,7 @@
 // Data fetchers that process and combine data from APIs
 import * as jolpica from './jolpica';
 import * as openf1 from './openf1';
-import { DriverStats, RaceResult, Result } from '../types/driver';
+import { DriverRaceResult, DriverStats, RaceResult, Result } from '../types/driver';
 import { calculateDriverStats } from '../utils/calculations';
 
 // Get comprehensive driver statistics
@@ -14,7 +14,7 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
     const raceResults = await jolpica.getDriverResults(driverId);
     
     // Extract all results from races
-    const allResults: Result[] = [];
+    const allResults: DriverRaceResult[] = [];
     raceResults.forEach((race: any) => {
       if (race.Results && race.Results.length > 0) {
         allResults.push({
