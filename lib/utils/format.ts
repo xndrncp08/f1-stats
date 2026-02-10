@@ -1,4 +1,4 @@
-import { format, formatDistance, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 
 // Format lap time from milliseconds
 export function formatLapTime(milliseconds: number): string {
@@ -102,6 +102,7 @@ export function formatRelativeTime(date: Date | string): string {
 export function getTeamColor(teamName: string): string {
   const teamColors: Record<string, string> = {
     "Red Bull Racing": "#3671C6",
+    "Red Bull": "#3671C6",
     Ferrari: "#E8002D",
     Mercedes: "#27F4D2",
     McLaren: "#FF8000",
@@ -109,8 +110,11 @@ export function getTeamColor(teamName: string): string {
     Alpine: "#FF87BC",
     Williams: "#64C4FF",
     Haas: "#B6BABD",
+    "Haas F1 Team": "#B6BABD",
     RB: "#6692FF",
+    "RB F1 Team": "#6692FF",
     Sauber: "#52E252",
+    "Kick Sauber": "#52E252",
     AlphaTauri: "#5E8FAA",
     "Alfa Romeo": "#C92D4B",
   };
@@ -136,6 +140,15 @@ export function getNationalityFlag(nationality: string): string {
     Danish: "🇩🇰",
     Finnish: "🇫🇮",
     Italian: "🇮🇹",
+    American: "🇺🇸",
+    Belgian: "🇧🇪",
+    Brazilian: "🇧🇷",
+    Argentine: "🇦🇷",
+    Austrian: "🇦🇹",
+    Swiss: "🇨🇭",
+    Swedish: "🇸🇪",
+    "New Zealander": "🇳🇿",
+    Polish: "🇵🇱",
   };
 
   return flags[nationality] || "🏁";
@@ -157,4 +170,16 @@ export function formatGap(gap: number): string {
   if (gap === 0) return "Leader";
   if (gap < 1) return `+${(gap * 1000).toFixed(0)}ms`;
   return `+${gap.toFixed(3)}s`;
+}
+
+// Format duration in seconds to readable format
+export function formatDuration(seconds: number): string {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  }
+  return `${minutes}:${secs.toString().padStart(2, "0")}`;
 }
