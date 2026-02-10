@@ -19,7 +19,7 @@ async function fetchFromOpenF1<T>(endpoint: string, params?: Record<string, any>
     });
 
     if (!response.ok) {
-      throw new Error(`OpenF1 API error: ${response.status}`);
+      throw new Error(`OpenF1 API error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -43,7 +43,26 @@ export async function getSessions(params?: {
 // Get latest session
 export async function getLatestSession() {
   const sessions = await getSessions();
-  return sessions[sessions.length - 1];
+  return sessions.length > 0 ? sessions[sessions.length - 1] : null;
+}
+
+// Get live session (currently active)
+export async function getLiveSession() {
+  try {
+    const sessions = await getSessions();
+    const now = new Date();
+    
+    const liveSession = sessions.find((session: any) => {
+      const start = new Date(session.date_start);
+      const end = new Date(session.date_end);
+      return now >= start && now <= end;
+    });
+    
+    return liveSession || null;
+  } catch (error) {
+    console.error('Error getting live session:', error);
+    return null;
+  }
 }
 
 // Get car data (telemetry)
@@ -127,50 +146,60 @@ export async function getLocation(params: {
 }
 
 // Get driver list for a session
-export async function getDrivers(session_key: number) {
-  const positions = await getPositions({ session_key });
-  const driverNumbers = [...new Set(positions.map(p => p.driver_number))];
-  return driverNumbers.sort((a, b) => a - b);
+export async function getDrivers(session_key: number): Promise<number[]> {
+  try {
+    const positions = await getPositions({ session_key });
+    const driverNumbers = [...new Set(positions.map(p => p.driver_number))];
+    return driverNumbers.sort((a, b) => a - b);
+  } catch (error) {
+    console.error('Error getting drivers:', error);
+    return [];
+  }
 }
 
 // Get real-time telemetry for all drivers in a session
 export async function getSessionTelemetry(session_key: number, limit: number = 100) {
-  const drivers = await getDrivers(session_key);
-  
-  const telemetryPromises = drivers.map(async (driver_number) => {
-    try {
-      const [carData, laps, positions] = await Promise.all([
-        getCarData({ session_key, driver_number }).catch(() => []),
-        getLaps({ session_key, driver_number }).catch(() => []),
-        getPositions({ session_key, driver_number }).catch(() => []),
-      ]);
+  try {
+    const drivers = await getDrivers(session_key);
+    
+    const telemetryPromises = drivers.map(async (driver_number) => {
+      try {
+        const [carData, laps, positions] = await Promise.all([
+          getCarData({ session_key, driver_number }).catch(() => []),
+          getLaps({ session_key, driver_number }).catch(() => []),
+          getPositions({ session_key, driver_number }).catch(() => []),
+        ]);
 
-      const latestCar = carData[carData.length - 1];
-      const latestPosition = positions[positions.length - 1];
-      const latestLap = laps[laps.length - 1];
+        const latestCar = carData.length > 0 ? carData[carData.length - 1] : null;
+        const latestPosition = positions.length > 0 ? positions[positions.length - 1] : null;
+        const latestLap = laps.length > 0 ? laps[laps.length - 1] : null;
 
-      return {
-        driver_number,
-        telemetry: {
-          speed: latestCar?.speed || 0,
-          rpm: latestCar?.rpm || 0,
-          gear: latestCar?.n_gear || 0,
-          throttle: latestCar?.throttle || 0,
-          brake: latestCar?.brake || 0,
-          drs: latestCar?.drs || 0,
-        },
-        position: latestPosition?.position || 0,
-        lap_number: latestLap?.lap_number || 0,
-        lap_time: latestLap?.lap_duration || 0,
-      };
-    } catch (error) {
-      console.error(`Error fetching telemetry for driver ${driver_number}:`, error);
-      return null;
-    }
-  });
+        return {
+          driver_number,
+          telemetry: {
+            speed: latestCar?.speed || 0,
+            rpm: latestCar?.rpm || 0,
+            gear: latestCar?.n_gear || 0,
+            throttle: latestCar?.throttle || 0,
+            brake: latestCar?.brake || 0,
+            drs: latestCar?.drs || 0,
+          },
+          position: latestPosition?.position || 0,
+          lap_number: latestLap?.lap_number || 0,
+          lap_time: latestLap?.lap_duration || 0,
+        };
+      } catch (error) {
+        console.error(`Error fetching telemetry for driver ${driver_number}:`, error);
+        return null;
+      }
+    });
 
-  const results = await Promise.all(telemetryPromises);
-  return results.filter(r => r !== null);
+    const results = await Promise.all(telemetryPromises);
+    return results.filter(r => r !== null);
+  } catch (error) {
+    console.error('Error getting session telemetry:', error);
+    return [];
+  }
 }
 
 // Stream real-time updates (polling simulation)
@@ -178,7 +207,7 @@ export async function streamSessionData(
   session_key: number,
   callback: (data: any) => void,
   interval: number = 5000
-) {
+): Promise<() => void> {
   const pollData = async () => {
     try {
       const data = await getSessionTelemetry(session_key);
