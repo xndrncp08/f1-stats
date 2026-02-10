@@ -21,7 +21,7 @@ async function fetchFromAPI<T>(endpoint: string): Promise<T> {
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      throw new Error(`API error: ${response.status} - ${response.statusText}`);
     }
 
     const data = await response.json();
@@ -33,7 +33,7 @@ async function fetchFromAPI<T>(endpoint: string): Promise<T> {
 }
 
 // Get current season
-export async function getCurrentSeason() {
+export async function getCurrentSeason(): Promise<string> {
   const data = await fetchFromAPI<any>('/current.json');
   return data.MRData.RaceTable.season;
 }
@@ -42,6 +42,11 @@ export async function getCurrentSeason() {
 export async function getDriversBySeason(season: string = 'current') {
   const data = await fetchFromAPI<any>(`/${season}/drivers.json`);
   return data.MRData.DriverTable.Drivers;
+}
+
+// Get current drivers (alias for consistency)
+export async function getCurrentDrivers() {
+  return getDriversBySeason('current');
 }
 
 // Get driver details
@@ -57,7 +62,12 @@ export async function getDriverStandings(season: string = 'current', round?: str
     : `/${season}/driverStandings.json`;
   
   const data = await fetchFromAPI<any>(endpoint);
-  return data.MRData.StandingsTable.StandingsLists[0].DriverStandings;
+  return data.MRData.StandingsTable.StandingsLists[0]?.DriverStandings || [];
+}
+
+// Get current driver standings (alias for consistency)
+export async function getCurrentDriverStandings() {
+  return getDriverStandings('current');
 }
 
 // Get all race results for a driver
@@ -84,6 +94,24 @@ export async function getRaceSchedule(season: string = 'current') {
   return data.MRData.RaceTable.Races;
 }
 
+// Get race calendar (alias for consistency)
+export async function getRaceCalendar(season: string = 'current') {
+  const races = await getRaceSchedule(season);
+  const now = new Date();
+  
+  return races.map((race: any) => ({
+    ...race,
+    isPast: new Date(race.date) < now,
+  }));
+}
+
+// Get next race
+export async function getNextRace() {
+  const races = await getRaceCalendar('current');
+  const upcoming = races.filter((r: any) => !r.isPast);
+  return upcoming[0] || null;
+}
+
 // Get specific race details
 export async function getRaceResults(season: string, round: string) {
   const data = await fetchFromAPI<any>(`/${season}/${round}/results.json`);
@@ -99,7 +127,7 @@ export async function getQualifyingResults(season: string, round: string) {
 // Get constructor standings
 export async function getConstructorStandings(season: string = 'current') {
   const data = await fetchFromAPI<any>(`/${season}/constructorStandings.json`);
-  return data.MRData.StandingsTable.StandingsLists[0].ConstructorStandings;
+  return data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings || [];
 }
 
 // Get all constructors
@@ -168,17 +196,17 @@ export async function getDriverPodiums(driverId: string) {
 // Get lap times for a race
 export async function getLapTimes(season: string, round: string, lap: string) {
   const data = await fetchFromAPI<any>(`/${season}/${round}/laps/${lap}.json`);
-  return data.MRData.RaceTable.Races[0].Laps[0].Timings;
+  return data.MRData.RaceTable.Races[0]?.Laps[0]?.Timings || [];
 }
 
 // Get pit stops for a race
 export async function getPitStops(season: string, round: string) {
   const data = await fetchFromAPI<any>(`/${season}/${round}/pitstops.json?limit=100`);
-  return data.MRData.RaceTable.Races[0].PitStops;
+  return data.MRData.RaceTable.Races[0]?.PitStops || [];
 }
 
 // Get status (reason for DNF)
 export async function getStatus(statusId: string) {
   const data = await fetchFromAPI<any>(`/status/${statusId}.json`);
   return data.MRData.StatusTable.Status[0];
-}
+} 
