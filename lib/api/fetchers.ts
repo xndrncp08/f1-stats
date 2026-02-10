@@ -1,18 +1,26 @@
 import * as jolpica from './jolpica';
 import * as openf1 from './openf1';
-import { Driver, DriverStats, RaceResult, Result, Constructor, DriverRaceResult, SeasonResult } from '../types/driver';
+import { 
+  Driver, DriverStats, RaceResult, Result, Constructor, DriverRaceResult, SeasonResult 
+} from '../types/driver';
 import { calculateDriverStats } from '../utils/calculations';
 
-// Get comprehensive driver statistics
+export async function getCurrentDrivers(): Promise<Driver[]> {
+  return jolpica.getCurrentDrivers();
+}
+
+export async function getCurrentStandings(): Promise<Result[]> {
+  return jolpica.getCurrentDriverStandings();
+}
+
 export async function getDriverStats(driverId: string): Promise<DriverStats | null> {
   try {
     const driver = await jolpica.getDriver(driverId);
     const raceResults = await jolpica.getDriverResults(driverId);
 
-    // Transform raw results into DriverRaceResult[]
     const allResults: DriverRaceResult[] = [];
     raceResults.forEach((race: any) => {
-      if (race.Results && race.Results.length > 0) {
+      if (race.Results?.length) {
         allResults.push({
           ...race.Results[0],
           season: race.season,
@@ -22,20 +30,14 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
       }
     });
 
-    // Calculate overall stats
     const stats = calculateDriverStats(allResults, driverId);
 
-    // Poles
     const qualifying = await jolpica.getDriverQualifying(driverId, 'current');
     const polePositions = qualifying.filter((q: any) => q.QualifyingResults?.[0]?.position === '1').length;
 
-    // Fastest laps
     const fastestLaps = await jolpica.getDriverFastestLaps(driverId);
-
-    // Wins
     const wins = await jolpica.getDriverWins(driverId);
 
-    // Group by season
     const seasonMap = new Map<string, DriverRaceResult[]>();
     allResults.forEach(result => {
       if (!seasonMap.has(result.season)) seasonMap.set(result.season, []);
@@ -90,42 +92,52 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
   }
 }
 
-// Calculate head-to-head record against teammate
-export function calculateH2HRecord(
-  driverResults: DriverRaceResult[],
-  teammateResults: DriverRaceResult[]
-): { wins: number; losses: number; draws: number } {
-  let wins = 0;
-  let losses = 0;
-  let draws = 0;
-
-  const raceMap = new Map<string, { driver?: DriverRaceResult; teammate?: DriverRaceResult }>();
-
-  driverResults.forEach(r => {
-    const key = `${r.season}-${r.round}`;
-    const existing = raceMap.get(key) || {};
-    raceMap.set(key, { ...existing, driver: r });
-  });
-
-  teammateResults.forEach(r => {
-    const key = `${r.season}-${r.round}`;
-    const existing = raceMap.get(key) || {};
-    raceMap.set(key, { ...existing, teammate: r });
-  });
-
-  raceMap.forEach(({ driver, teammate }) => {
-    if (!driver || !teammate) return;
-
-    const driverPos = parseInt(driver.position);
-    const teammatePos = parseInt(teammate.position);
-
-    if (driverPos < teammatePos) wins++;
-    else if (driverPos > teammatePos) losses++;
-    else draws++;
-  });
-
-  return { wins, losses, draws };
+export async function getDriverComparison(driverId1: string, driverId2: string) {
+  const driver1Stats = await getDriverStats(driverId1);
+  const driver2Stats = await getDriverStats(driverId2);
+  return { driver1Stats, driver2Stats };
 }
 
-// You can add other helper functions like calculateRecentForm, calculateMomentum, etc.
-// They can continue to use Result[] unless they need season/round fields.
+export async function getRaceCalendar(season: string) {
+  return jolpica.getRaceCalendar(season);
+}
+
+export async function getNextRace() {
+  return jolpica.getNextRace();
+}
+
+export async function getRaceResultsDetailed(season: string, round: string) {
+  return jolpica.getRaceResults(season, round);
+}
+
+export async function getLiveSessionData() {
+  return openf1.getLiveSession();
+}
+
+export async function getSessions(options?: any) {
+  return openf1.getSessions(options);
+}
+
+export async function isSessionLive(sessionKey: number) {
+  return openf1.isSessionLive(sessionKey);
+}
+
+export async function getSessionTelemetry(sessionKey: number) {
+  return openf1.getSessionTelemetry(sessionKey);
+}
+
+export async function getDriverPerformanceSummary(sessionKey: number, driverNumber: number) {
+  return openf1.getDriverPerformanceSummary(sessionKey, driverNumber);
+}
+
+export async function getLaps(params: { session_key: number; driver_number: number }) {
+  return openf1.getLaps(params);
+}
+
+export async function getStints(params: { session_key: number; driver_number: number }) {
+  return openf1.getStints(params);
+}
+
+export async function streamSessionData(sessionKey: number, callback: (data: any) => void, interval: number) {
+  return openf1.streamSessionData(sessionKey, callback, interval);
+}
