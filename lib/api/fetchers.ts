@@ -1,19 +1,27 @@
-import * as jolpica from './jolpica';
-import * as openf1 from './openf1';
-import { 
-  Driver, DriverStats, RaceResult, Result, Constructor, DriverRaceResult, SeasonResult 
-} from '../types/driver';
-import { calculateDriverStats } from '../utils/calculations';
+import * as jolpica from "./jolpica";
+import * as openf1 from "./openf1";
+import {
+  Driver,
+  DriverStats,
+  RaceResult,
+  Result,
+  Constructor,
+  DriverRaceResult,
+  SeasonResult,
+} from "../types/driver";
+import { calculateDriverStats } from "../utils/calculations";
 
 export async function getCurrentDrivers(): Promise<Driver[]> {
   return jolpica.getCurrentDrivers();
 }
 
-export async function getCurrentStandings(): Promise<Result[]> {
+export async function getCurrentStandings(): Promise<any[]> {
   return jolpica.getCurrentDriverStandings();
 }
 
-export async function getDriverStats(driverId: string): Promise<DriverStats | null> {
+export async function getDriverStats(
+  driverId: string,
+): Promise<DriverStats | null> {
   try {
     const driver = await jolpica.getDriver(driverId);
     const raceResults = await jolpica.getDriverResults(driverId);
@@ -32,33 +40,76 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
 
     const stats = calculateDriverStats(allResults, driverId);
 
-    const qualifying = await jolpica.getDriverQualifying(driverId, 'current');
-    const polePositions = qualifying.filter((q: any) => q.QualifyingResults?.[0]?.position === '1').length;
+    const qualifying = await jolpica.getDriverQualifying(driverId, "current");
+    const polePositions = qualifying.filter(
+      (q: any) => q.QualifyingResults?.[0]?.position === "1",
+    ).length;
 
     const fastestLaps = await jolpica.getDriverFastestLaps(driverId);
     const wins = await jolpica.getDriverWins(driverId);
 
+    // Get championships - use the jolpica helper
+    let championships = 0;
+    try {
+      const championshipSeasons =
+        await jolpica.getDriverChampionships(driverId);
+      console.log(`Championship seasons for ${driverId}:`, championshipSeasons);
+
+      // Count how many seasons they finished in position 1
+      championships = championshipSeasons.filter(
+        (list: any) => list.DriverStandings?.[0]?.position === "1",
+      ).length;
+
+      console.log(`Total championships for ${driverId}: ${championships}`);
+    } catch (error) {
+      console.error(`Error fetching championships for ${driverId}:`, error);
+      championships = 0;
+    }
+
     const seasonMap = new Map<string, DriverRaceResult[]>();
-    allResults.forEach(result => {
+
+    allResults.forEach((result) => {
       if (!seasonMap.has(result.season)) seasonMap.set(result.season, []);
       seasonMap.get(result.season)!.push(result);
     });
 
-    const seasonResults: SeasonResult[] = Array.from(seasonMap.entries()).map(([season, results]) => {
-      const seasonStats = calculateDriverStats(results, driverId);
-      const team = results[0]?.Constructor?.name || 'Unknown';
+    const seasonResults: SeasonResult[] = Array.from(seasonMap.entries())
+      .map(([season, results]) => {
+        const seasonStats = calculateDriverStats(results, driverId);
+        const team =
+          results[results.length - 1]?.Constructor?.name || "Unknown"; // Get last race of season for most accurate team
 
-      return {
-        season,
-        team,
-        races: seasonStats.totalRaces || 0,
-        wins: seasonStats.totalWins || 0,
-        podiums: seasonStats.totalPodiums || 0,
-        poles: 0,
-        points: seasonStats.totalPoints || 0,
-        position: 0,
-      };
-    }).sort((a, b) => parseInt(b.season) - parseInt(a.season));
+        return {
+          season,
+          team,
+          races: seasonStats.totalRaces || 0,
+          wins: seasonStats.totalWins || 0,
+          podiums: seasonStats.totalPodiums || 0,
+          poles: 0,
+          points: seasonStats.totalPoints || 0,
+          position: 0,
+        };
+      })
+      .sort((a, b) => parseInt(b.season) - parseInt(a.season));
+
+    // Get current team from current standings
+    let currentTeam: Constructor | undefined;
+    try {
+      const currentStandings = await jolpica.getCurrentDriverStandings();
+      const currentStanding = currentStandings.find(
+        (s: any) => s.Driver.driverId === driverId,
+      );
+      if (currentStanding?.Constructors?.[0]) {
+        currentTeam = currentStanding.Constructors[0];
+      }
+    } catch (error) {
+      console.log("Could not fetch current team from standings");
+    }
+
+    // Fallback to most recent race result if current standings don't have the driver
+    if (!currentTeam && allResults.length > 0) {
+      currentTeam = allResults[allResults.length - 1]?.Constructor;
+    }
 
     return {
       driver,
@@ -68,7 +119,7 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
       totalPoles: polePositions,
       totalFastestLaps: fastestLaps.length,
       totalPoints: stats.totalPoints || 0,
-      totalChampionships: 0,
+      totalChampionships: championships,
       dnfCount: stats.dnfCount || 0,
       retirementRate: stats.retirementRate || 0,
       avgFinishPosition: stats.avgFinishPosition || 0,
@@ -78,11 +129,12 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
       pointsPerRace: stats.pointsPerRace || 0,
       winRate: stats.winRate || 0,
       podiumRate: stats.podiumRate || 0,
-      currentTeam: allResults[0]?.Constructor,
+      currentTeam,
       careerSpan: {
-        firstRace: raceResults[0]?.raceName || 'Unknown',
-        lastRace: raceResults[raceResults.length - 1]?.raceName || 'Unknown',
-        yearsActive: new Date().getFullYear() - parseInt(raceResults[0]?.season || '0'),
+        firstRace: raceResults[0]?.raceName || "Unknown",
+        lastRace: raceResults[raceResults.length - 1]?.raceName || "Unknown",
+        yearsActive:
+          new Date().getFullYear() - parseInt(raceResults[0]?.season || "0"),
       },
       seasonResults,
     };
@@ -92,7 +144,10 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
   }
 }
 
-export async function getDriverComparison(driverId1: string, driverId2: string) {
+export async function getDriverComparison(
+  driverId1: string,
+  driverId2: string,
+) {
   const driver1Stats = await getDriverStats(driverId1);
   const driver2Stats = await getDriverStats(driverId2);
   return { driver1Stats, driver2Stats };
@@ -126,18 +181,31 @@ export async function getSessionTelemetry(sessionKey: number) {
   return openf1.getSessionTelemetry(sessionKey);
 }
 
-export async function getDriverPerformanceSummary(sessionKey: number, driverNumber: number) {
+export async function getDriverPerformanceSummary(
+  sessionKey: number,
+  driverNumber: number,
+) {
   return openf1.getDriverPerformanceSummary(sessionKey, driverNumber);
 }
 
-export async function getLaps(params: { session_key: number; driver_number: number }) {
+export async function getLaps(params: {
+  session_key: number;
+  driver_number: number;
+}) {
   return openf1.getLaps(params);
 }
 
-export async function getStints(params: { session_key: number; driver_number: number }) {
+export async function getStints(params: {
+  session_key: number;
+  driver_number: number;
+}) {
   return openf1.getStints(params);
 }
 
-export async function streamSessionData(sessionKey: number, callback: (data: any) => void, interval: number) {
+export async function streamSessionData(
+  sessionKey: number,
+  callback: (data: any) => void,
+  interval: number,
+) {
   return openf1.streamSessionData(sessionKey, callback, interval);
 }

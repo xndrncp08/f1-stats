@@ -1,5 +1,5 @@
 // Jolpica F1 API Client (Ergast replacement)
-const BASE_URL = 'https://api.jolpi.ca/ergast/f1';
+const BASE_URL = "https://api.jolpi.ca/ergast/f1";
 
 export interface ApiResponse<T> {
   MRData: {
@@ -34,19 +34,19 @@ async function fetchFromAPI<T>(endpoint: string): Promise<T> {
 
 // Get current season
 export async function getCurrentSeason(): Promise<string> {
-  const data = await fetchFromAPI<any>('/current.json');
+  const data = await fetchFromAPI<any>("/current.json");
   return data.MRData.RaceTable.season;
 }
 
 // Get all drivers for a season
-export async function getDriversBySeason(season: string = 'current') {
+export async function getDriversBySeason(season: string = "current") {
   const data = await fetchFromAPI<any>(`/${season}/drivers.json`);
   return data.MRData.DriverTable.Drivers;
 }
 
 // Get current drivers (alias for consistency)
 export async function getCurrentDrivers() {
-  return getDriversBySeason('current');
+  return getDriversBySeason("current");
 }
 
 // Get driver details
@@ -56,49 +56,66 @@ export async function getDriver(driverId: string) {
 }
 
 // Get driver standings for a season
-export async function getDriverStandings(season: string = 'current', round?: string) {
-  const endpoint = round 
+export async function getDriverStandings(
+  season: string = "current",
+  round?: string,
+) {
+  const endpoint = round
     ? `/${season}/${round}/driverStandings.json`
     : `/${season}/driverStandings.json`;
-  
+
   const data = await fetchFromAPI<any>(endpoint);
   return data.MRData.StandingsTable.StandingsLists[0]?.DriverStandings || [];
 }
 
 // Get current driver standings (alias for consistency)
 export async function getCurrentDriverStandings() {
-  return getDriverStandings('current');
+  return getDriverStandings("current");
+}
+
+// Get all championships won by a driver (across all seasons)
+export async function getDriverChampionships(driverId: string) {
+  const data = await fetchFromAPI<any>(
+    `/drivers/${driverId}/driverStandings/1.json`,
+  );
+  return data.MRData.StandingsTable.StandingsLists || [];
 }
 
 // Get all race results for a driver
 export async function getDriverResults(driverId: string, limit: number = 1000) {
-  const data = await fetchFromAPI<any>(`/drivers/${driverId}/results.json?limit=${limit}`);
+  const data = await fetchFromAPI<any>(
+    `/drivers/${driverId}/results.json?limit=${limit}`,
+  );
   return data.MRData.RaceTable.Races;
 }
 
 // Get driver results for specific season
 export async function getDriverSeasonResults(driverId: string, season: string) {
-  const data = await fetchFromAPI<any>(`/${season}/drivers/${driverId}/results.json`);
+  const data = await fetchFromAPI<any>(
+    `/${season}/drivers/${driverId}/results.json`,
+  );
   return data.MRData.RaceTable.Races;
 }
 
 // Get qualifying results for a driver
 export async function getDriverQualifying(driverId: string, season: string) {
-  const data = await fetchFromAPI<any>(`/${season}/drivers/${driverId}/qualifying.json`);
+  const data = await fetchFromAPI<any>(
+    `/${season}/drivers/${driverId}/qualifying.json`,
+  );
   return data.MRData.RaceTable.Races;
 }
 
 // Get driver's race schedule
-export async function getRaceSchedule(season: string = 'current') {
+export async function getRaceSchedule(season: string = "current") {
   const data = await fetchFromAPI<any>(`/${season}.json`);
   return data.MRData.RaceTable.Races;
 }
 
 // Get race calendar (alias for consistency)
-export async function getRaceCalendar(season: string = 'current') {
+export async function getRaceCalendar(season: string = "current") {
   const races = await getRaceSchedule(season);
   const now = new Date();
-  
+
   return races.map((race: any) => ({
     ...race,
     isPast: new Date(race.date) < now,
@@ -107,7 +124,7 @@ export async function getRaceCalendar(season: string = 'current') {
 
 // Get next race
 export async function getNextRace() {
-  const races = await getRaceCalendar('current');
+  const races = await getRaceCalendar("current");
   const upcoming = races.filter((r: any) => !r.isPast);
   return upcoming[0] || null;
 }
@@ -125,13 +142,15 @@ export async function getQualifyingResults(season: string, round: string) {
 }
 
 // Get constructor standings
-export async function getConstructorStandings(season: string = 'current') {
+export async function getConstructorStandings(season: string = "current") {
   const data = await fetchFromAPI<any>(`/${season}/constructorStandings.json`);
-  return data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings || [];
+  return (
+    data.MRData.StandingsTable.StandingsLists[0]?.ConstructorStandings || []
+  );
 }
 
 // Get all constructors
-export async function getConstructors(season: string = 'current') {
+export async function getConstructors(season: string = "current") {
   const data = await fetchFromAPI<any>(`/${season}/constructors.json`);
   return data.MRData.ConstructorTable.Constructors;
 }
@@ -143,13 +162,18 @@ export async function getConstructor(constructorId: string) {
 }
 
 // Get constructor results
-export async function getConstructorResults(constructorId: string, season: string) {
-  const data = await fetchFromAPI<any>(`/${season}/constructors/${constructorId}/results.json`);
+export async function getConstructorResults(
+  constructorId: string,
+  season: string,
+) {
+  const data = await fetchFromAPI<any>(
+    `/${season}/constructors/${constructorId}/results.json`,
+  );
   return data.MRData.RaceTable.Races;
 }
 
 // Get circuits
-export async function getCircuits(season: string = 'current') {
+export async function getCircuits(season: string = "current") {
   const data = await fetchFromAPI<any>(`/${season}/circuits.json`);
   return data.MRData.CircuitTable.Circuits;
 }
@@ -162,7 +186,7 @@ export async function getCircuit(circuitId: string) {
 
 // Get seasons
 export async function getSeasons() {
-  const data = await fetchFromAPI<any>('/seasons.json?limit=100');
+  const data = await fetchFromAPI<any>("/seasons.json?limit=100");
   return data.MRData.SeasonTable.Seasons;
 }
 
@@ -171,22 +195,26 @@ export async function getDriverFastestLaps(driverId: string, season?: string) {
   const endpoint = season
     ? `/${season}/drivers/${driverId}/fastest/1/results.json`
     : `/drivers/${driverId}/fastest/1/results.json?limit=100`;
-  
+
   const data = await fetchFromAPI<any>(endpoint);
   return data.MRData.RaceTable.Races;
 }
 
 // Get driver's wins
 export async function getDriverWins(driverId: string) {
-  const data = await fetchFromAPI<any>(`/drivers/${driverId}/results/1.json?limit=100`);
+  const data = await fetchFromAPI<any>(
+    `/drivers/${driverId}/results/1.json?limit=100`,
+  );
   return data.MRData.RaceTable.Races;
 }
 
 // Get driver's podiums
 export async function getDriverPodiums(driverId: string) {
-  const data = await fetchFromAPI<any>(`/drivers/${driverId}/results.json?limit=1000`);
+  const data = await fetchFromAPI<any>(
+    `/drivers/${driverId}/results.json?limit=1000`,
+  );
   const races = data.MRData.RaceTable.Races;
-  
+
   return races.filter((race: any) => {
     const result = race.Results[0];
     return result && parseInt(result.position) <= 3;
@@ -201,7 +229,9 @@ export async function getLapTimes(season: string, round: string, lap: string) {
 
 // Get pit stops for a race
 export async function getPitStops(season: string, round: string) {
-  const data = await fetchFromAPI<any>(`/${season}/${round}/pitstops.json?limit=100`);
+  const data = await fetchFromAPI<any>(
+    `/${season}/${round}/pitstops.json?limit=100`,
+  );
   return data.MRData.RaceTable.Races[0]?.PitStops || [];
 }
 
@@ -209,4 +239,5 @@ export async function getPitStops(season: string, round: string) {
 export async function getStatus(statusId: string) {
   const data = await fetchFromAPI<any>(`/status/${statusId}.json`);
   return data.MRData.StatusTable.Status[0];
-} 
+}
+  

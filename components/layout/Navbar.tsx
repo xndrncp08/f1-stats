@@ -65,7 +65,7 @@ const Navbar = () => {
           backgroundSize: "4px 4px, 4px 4px, 100% 100%",
         }}
       />
-      
+
       {/* Carbon fiber shine/reflection */}
       <div
         className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
@@ -124,7 +124,7 @@ const Navbar = () => {
           <Link href="/live">
             <Button className="bg-red-600 hover:bg-red-700 text-white font-bold rounded-none uppercase tracking-wider text-sm px-6 shadow-lg shadow-red-600/20 hover:shadow-gray-600 transition-all">
               Live
-            </Button> 
+            </Button>
           </Link>
         </div>
 
