@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft, TrendingUp, Loader2 } from "lucide-react";
+import { useState } from "react";
+import CompareHero from "@/components/compare/CompareHero";
+import DriverSelector from "@/components/compare/DriverSelector";
+import DriverProfileCard from "@/components/compare/DriverProfileCard";
+import StatComparison from "@/components/compare/StatComparison";
+import AdditionalStats from "@/components/compare/AdditionalStats";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useDrivers, useDriverStats } from "@/lib/hooks/useDrivers";
-import { formatPoints, formatPercentage } from "@/lib/utils/format";
+  useDrivers,
+  useDriverStats,
+  useDriverStandings,
+} from "@/lib/hooks/useDrivers";
 import { DriverStats } from "@/lib/types/driver";
 
 export default function ComparePage() {
@@ -25,8 +23,32 @@ export default function ComparePage() {
     useDriverStats(driver1Id);
   const { data: driver2Stats, isLoading: driver2Loading } =
     useDriverStats(driver2Id);
+  const { data: currentStandings } = useDriverStandings();
 
   const isLoading = driversLoading || driver1Loading || driver2Loading;
+
+  // Helper function to get the most recent team from standings or seasonResults
+  const getMostRecentTeam = (driverStats: DriverStats | undefined) => {
+    if (!driverStats) return "N/A";
+
+    // First, try to get from current standings (most accurate)
+    if (currentStandings && Array.isArray(currentStandings)) {
+      const standing = currentStandings.find(
+        (s: any) => s?.Driver?.driverId === driverStats.driver.driverId,
+      );
+      if (standing?.Constructors?.[0]?.name) {
+        return standing.Constructors[0].name;
+      }
+    }
+
+    // Fallback to seasonResults (most recent season)
+    if (driverStats.seasonResults && driverStats.seasonResults.length > 0) {
+      return driverStats.seasonResults[0].team;
+    }
+
+    // Last fallback to currentTeam
+    return driverStats.currentTeam?.name || "N/A";
+  };
 
   const compareStats =
     driver1Stats && driver2Stats
@@ -77,330 +99,55 @@ export default function ComparePage() {
         ]
       : [];
 
-  const getPercentageWidth = (
-    d1: number,
-    d2: number,
-    isAverage: boolean = false,
-  ) => {
-    if (isAverage) {
-      // For averages, lower is better, so invert the calculation
-      const total = d1 + d2;
-      const d1Percent = total > 0 ? (d2 / total) * 100 : 50;
-      const d2Percent = total > 0 ? (d1 / total) * 100 : 50;
-      return { d1: d1Percent, d2: d2Percent };
-    }
-
-    const total = d1 + d2;
-    const d1Percent = total > 0 ? (d1 / total) * 100 : 50;
-    const d2Percent = total > 0 ? (d2 / total) * 100 : 50;
-    return { d1: d1Percent, d2: d2Percent };
-  };
-
   return (
-    <main className="min-h-screen bg-gradient-to-b from-f1-carbon to-f1-dark">
-      <div className="container mx-auto px-4 py-8">
-        <Link href="/">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
-        </Link>
+    <main className="min-h-screen bg-black">
+      <CompareHero />
 
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-            <TrendingUp className="h-10 w-10 text-f1-neon-green" />
-            Driver Comparison
-          </h1>
-          <p className="text-zinc-400">
-            Head-to-head career statistics comparison
-          </p>
-        </div>
-
-        {/* Driver Selection */}
-        <Card className="bg-zinc-900 border-zinc-800 mb-8">
-          <CardHeader>
-            <CardTitle className="text-white">
-              Select Drivers to Compare
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-zinc-400 mb-2 block">
-                  Driver 1
-                </label>
-                <Select value={driver1Id} onValueChange={setDriver1Id}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    {allDrivers?.map((driver: any) => (
-                      <SelectItem
-                        key={driver.driverId}
-                        value={driver.driverId}
-                        className="text-white hover:bg-zinc-700"
-                      >
-                        {driver.givenName} {driver.familyName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm text-zinc-400 mb-2 block">
-                  Driver 2
-                </label>
-                <Select value={driver2Id} onValueChange={setDriver2Id}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
-                    <SelectValue placeholder="Select driver" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-800 border-zinc-700">
-                    {allDrivers?.map((driver: any) => (
-                      <SelectItem
-                        key={driver.driverId}
-                        value={driver.driverId}
-                        className="text-white hover:bg-zinc-700"
-                      >
-                        {driver.givenName} {driver.familyName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="container mx-auto px-4 py-12">
+        <DriverSelector
+          driver1Id={driver1Id}
+          driver2Id={driver2Id}
+          onDriver1Change={setDriver1Id}
+          onDriver2Change={setDriver2Id}
+          allDrivers={allDrivers || []}
+        />
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-12 w-12 text-f1-neon-blue animate-spin" />
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-zinc-500 font-bold uppercase tracking-wider">
+              Loading data...
+            </p>
           </div>
         ) : driver1Stats && driver2Stats ? (
           <>
-            {/* Driver Cards */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <Card className="bg-gradient-to-br from-blue-900/20 to-zinc-900 border-blue-500/30">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white">
-                    {driver1Stats.driver.givenName}{" "}
-                    {driver1Stats.driver.familyName}
-                  </CardTitle>
-                  <p className="text-zinc-400">
-                    #{driver1Stats.driver.permanentNumber || "—"} •{" "}
-                    {driver1Stats.driver.nationality}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Current Team</span>
-                      <span className="text-white font-medium">
-                        {driver1Stats.currentTeam?.name || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Career Span</span>
-                      <span className="text-white font-medium">
-                        {driver1Stats.careerSpan.yearsActive} years
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Championships</span>
-                      <span className="text-white font-medium">
-                        {driver1Stats.totalChampionships}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-cyan-900/20 to-zinc-900 border-cyan-500/30">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-white">
-                    {driver2Stats.driver.givenName}{" "}
-                    {driver2Stats.driver.familyName}
-                  </CardTitle>
-                  <p className="text-zinc-400">
-                    #{driver2Stats.driver.permanentNumber || "—"} •{" "}
-                    {driver2Stats.driver.nationality}
-                  </p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Current Team</span>
-                      <span className="text-white font-medium">
-                        {driver2Stats.currentTeam?.name || "N/A"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Career Span</span>
-                      <span className="text-white font-medium">
-                        {driver2Stats.careerSpan.yearsActive} years
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-zinc-400">Championships</span>
-                      <span className="text-white font-medium">
-                        {driver2Stats.totalChampionships}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Driver Profile Cards */}
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <DriverProfileCard
+                driverStats={driver1Stats}
+                isDriver1={true}
+                currentTeam={getMostRecentTeam(driver1Stats)}
+              />
+              <DriverProfileCard
+                driverStats={driver2Stats}
+                isDriver1={false}
+                currentTeam={getMostRecentTeam(driver2Stats)}
+              />
             </div>
 
             {/* Statistics Comparison */}
-            <Card className="bg-zinc-900 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="text-white">Career Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {compareStats.map((stat, index) => {
-                    const percentages = getPercentageWidth(
-                      stat.d1,
-                      stat.d2,
-                      stat.isAverage || false,
-                    );
-
-                    return (
-                      <div key={index}>
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-zinc-400">
-                            {stat.label}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div className="flex-1 text-right">
-                            <span className="text-2xl font-bold text-blue-500">
-                              {stat.isPercentage
-                                ? formatPercentage(stat.d1)
-                                : stat.isAverage
-                                  ? stat.d1.toFixed(1)
-                                  : Math.round(stat.d1)}
-                            </span>
-                          </div>
-                          <div className="flex-1 flex items-center gap-2">
-                            <div className="flex-1 h-8 bg-zinc-800 rounded-lg overflow-hidden flex">
-                              <div
-                                className="bg-blue-500 flex items-center justify-end pr-2 transition-all"
-                                style={{ width: `${percentages.d1}%` }}
-                              >
-                                {percentages.d1 > 20 && (
-                                  <span className="text-xs font-bold text-white">
-                                    {percentages.d1.toFixed(0)}%
-                                  </span>
-                                )}
-                              </div>
-                              <div
-                                className="bg-cyan-500 flex items-center justify-start pl-2 transition-all"
-                                style={{ width: `${percentages.d2}%` }}
-                              >
-                                {percentages.d2 > 20 && (
-                                  <span className="text-xs font-bold text-white">
-                                    {percentages.d2.toFixed(0)}%
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex-1 text-left">
-                            <span className="text-2xl font-bold text-cyan-500">
-                              {stat.isPercentage
-                                ? formatPercentage(stat.d2)
-                                : stat.isAverage
-                                  ? stat.d2.toFixed(1)
-                                  : Math.round(stat.d2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <StatComparison compareStats={compareStats} />
 
             {/* Additional Stats */}
-            <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-white">
-                    {driver1Stats.driver.familyName} - Additional Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Fastest Laps</span>
-                      <span className="text-white font-bold">
-                        {driver1Stats.totalFastestLaps}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">DNFs</span>
-                      <span className="text-white font-bold">
-                        {driver1Stats.dnfCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Retirement Rate</span>
-                      <span className="text-white font-bold">
-                        {formatPercentage(driver1Stats.retirementRate)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Points Per Race</span>
-                      <span className="text-white font-bold">
-                        {driver1Stats.pointsPerRace.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-zinc-900 border-zinc-800">
-                <CardHeader>
-                  <CardTitle className="text-white">
-                    {driver2Stats.driver.familyName} - Additional Stats
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Fastest Laps</span>
-                      <span className="text-white font-bold">
-                        {driver2Stats.totalFastestLaps}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">DNFs</span>
-                      <span className="text-white font-bold">
-                        {driver2Stats.dnfCount}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Retirement Rate</span>
-                      <span className="text-white font-bold">
-                        {formatPercentage(driver2Stats.retirementRate)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-zinc-400">Points Per Race</span>
-                      <span className="text-white font-bold">
-                        {driver2Stats.pointsPerRace.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="grid md:grid-cols-2 gap-8">
+              <AdditionalStats driverStats={driver1Stats} isDriver1={true} />
+              <AdditionalStats driverStats={driver2Stats} isDriver1={false} />
             </div>
           </>
         ) : (
-          <Card className="bg-zinc-900 border-zinc-800">
-            <CardContent className="py-12 text-center">
-              <p className="text-zinc-400 text-lg">
+          <Card className="bg-zinc-900 border-zinc-800 rounded-none">
+            <CardContent className="py-20 text-center">
+              <p className="text-zinc-400 text-xl font-bold uppercase tracking-wider">
                 Unable to load driver data. Please try again.
               </p>
             </CardContent>
