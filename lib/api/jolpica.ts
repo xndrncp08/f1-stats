@@ -70,7 +70,10 @@ export async function getDriverStandings(
 
 // Get current driver standings (alias for consistency)
 export async function getCurrentDriverStandings() {
-  return getDriverStandings("current");
+  // Use 2025 since 2026 season hasn't started yet
+  const currentYear = new Date().getFullYear();
+  const season = currentYear > 2025 ? "2025" : currentYear.toString();
+  return getDriverStandings(season);
 }
 
 // Get all championships won by a driver (across all seasons)
