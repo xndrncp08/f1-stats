@@ -1,70 +1,72 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 
 interface TelemetryChartProps {
   data: any[];
   title: string;
-  dataKeys: {
-    key: string;
-    name: string;
-    color: string;
-  }[];
+  dataKeys: { key: string; name: string; color: string }[];
   yAxisDomain: [number, number];
 }
 
-export default function TelemetryChart({
-  data,
-  title,
-  dataKeys,
-  yAxisDomain,
-}: TelemetryChartProps) {
+export default function TelemetryChart({ data, title, dataKeys, yAxisDomain }: TelemetryChartProps) {
   return (
-    <Card className="bg-zinc-900 border-zinc-800 rounded-none overflow-hidden">
-      <div className="h-1 bg-gradient-to-r from-red-600 to-red-400" />
-      <CardHeader className="border-b border-zinc-800/50">
+    <div
+      className="relative overflow-hidden"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#E10600]" />
+
+      <div className="p-6 border-b" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
         <div className="flex items-center gap-3">
-          <div className="h-6 w-1 bg-red-600" />
-          <CardTitle className="text-xl font-black text-white tracking-tight uppercase">
+          <span className="live-dot" />
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800,
+              fontSize: "1rem",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "white",
+            }}
+          >
             {title}
-          </CardTitle>
+          </span>
         </div>
-      </CardHeader>
-      <CardContent className="p-8 bg-zinc-900/50">
-        <ResponsiveContainer width="100%" height={350}>
+      </div>
+
+      <div className="p-6">
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+            <CartesianGrid strokeDasharray="2 4" stroke="rgba(255,255,255,0.05)" />
             <XAxis
               dataKey="time"
-              stroke="#71717a"
-              tick={{ fill: "#a1a1aa", fontSize: 12, fontWeight: 700 }}
+              stroke="rgba(255,255,255,0.1)"
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}
             />
             <YAxis
-              stroke="#71717a"
-              tick={{ fill: "#a1a1aa", fontSize: 12, fontWeight: 700 }}
+              stroke="rgba(255,255,255,0.1)"
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", fontWeight: 500 }}
               domain={yAxisDomain}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: "#18181b",
-                border: "1px solid #27272a",
-                borderRadius: "0px",
-                fontWeight: 700,
+                backgroundColor: "#141414",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: 0,
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "0.75rem",
               }}
-              labelStyle={{ color: "#fff", fontWeight: 700 }}
+              labelStyle={{ color: "rgba(255,255,255,0.6)", fontWeight: 500 }}
+              itemStyle={{ color: "rgba(255,255,255,0.8)" }}
             />
             <Legend
               wrapperStyle={{
+                fontFamily: "'Barlow Condensed', sans-serif",
                 fontWeight: 700,
-                fontSize: "14px",
+                fontSize: "0.75rem",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
               }}
             />
             {dataKeys.map((item) => (
@@ -74,13 +76,14 @@ export default function TelemetryChart({
                 dataKey={item.key}
                 name={item.name}
                 stroke={item.color}
-                strokeWidth={3}
+                strokeWidth={2}
                 dot={false}
+                activeDot={{ r: 3, fill: item.color }}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

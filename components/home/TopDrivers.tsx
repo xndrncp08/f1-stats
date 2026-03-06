@@ -10,9 +10,7 @@ const podiumAccent = [
   { color: "#A0674A", label: "3rd" },
 ];
 
-export default function TopDriversSection({
-  topDrivers,
-}: TopDriversSectionProps) {
+export default function TopDriversSection({ topDrivers }: TopDriversSectionProps) {
   if (!topDrivers || topDrivers.length === 0) return null;
 
   return (
@@ -40,18 +38,9 @@ export default function TopDriversSection({
       </div>
 
       {/* Drivers grid */}
-      <div
-        className="grid md:grid-cols-3 gap-0"
-        style={{
-          border: "1px solid rgba(255,255,255,0.07)",
-          borderRight: "none",
-        }}
-      >
+      <div className="grid md:grid-cols-3 gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)", borderRight: "none" }}>
         {topDrivers.map((standing: any, index: number) => {
-          const accent = podiumAccent[index] || {
-            color: "#E10600",
-            label: `${index + 1}`,
-          };
+          const accent = podiumAccent[index] || { color: "#E10600", label: `${index + 1}` };
           return (
             <div
               key={standing.Driver.driverId}
@@ -59,17 +48,12 @@ export default function TopDriversSection({
               style={{ borderRight: "1px solid rgba(255,255,255,0.07)" }}
             >
               {/* Colored top bar */}
-              <div
-                className="h-[3px] w-full"
-                style={{ background: accent.color }}
-              />
+              <div className="h-[3px] w-full" style={{ background: accent.color }} />
 
               {/* Hover wash */}
               <div
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-                style={{
-                  background: `radial-gradient(ellipse at top center, ${accent.color}0d 0%, transparent 60%)`,
-                }}
+                style={{ background: `radial-gradient(ellipse at top center, ${accent.color}0d 0%, transparent 60%)` }}
               />
 
               <div className="p-8 relative">
@@ -91,10 +75,7 @@ export default function TopDriversSection({
                   {/* Position label */}
                   <div
                     className="inline-flex items-center gap-2 mb-5 px-2 py-1"
-                    style={{
-                      border: `1px solid ${accent.color}33`,
-                      background: `${accent.color}0d`,
-                    }}
+                    style={{ border: `1px solid ${accent.color}33`, background: `${accent.color}0d` }}
                   >
                     <span
                       style={{
@@ -114,36 +95,19 @@ export default function TopDriversSection({
                   <div className="mb-6">
                     <div
                       className="text-white/50 font-display leading-none"
-                      style={{
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "1.1rem",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.04em",
-                      }}
+                      style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 600, fontSize: "1.1rem", textTransform: "uppercase", letterSpacing: "0.04em" }}
                     >
                       {standing.Driver.givenName}
                     </div>
                     <div
                       className="text-white font-display leading-none"
-                      style={{
-                        fontFamily: "'Barlow Condensed', sans-serif",
-                        fontWeight: 900,
-                        fontSize: "2.25rem",
-                        textTransform: "uppercase",
-                        lineHeight: 1,
-                      }}
+                      style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, fontSize: "2.25rem", textTransform: "uppercase", lineHeight: 1 }}
                     >
                       {standing.Driver.familyName}
                     </div>
                     <div className="flex items-center gap-2 mt-3">
-                      <div
-                        className="h-px w-6"
-                        style={{ background: accent.color }}
-                      />
-                      <span className="data-readout">
-                        {standing.Driver.nationality}
-                      </span>
+                      <div className="h-px w-6" style={{ background: accent.color }} />
+                      <span className="data-readout">{standing.Driver.nationality}</span>
                     </div>
                   </div>
 
@@ -163,10 +127,7 @@ export default function TopDriversSection({
                   </div>
 
                   {/* Stats */}
-                  <div
-                    className="grid grid-cols-3 gap-0"
-                    style={{ border: "1px solid rgba(255,255,255,0.07)" }}
-                  >
+                  <div className="grid grid-cols-3 gap-0" style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
                     {[
                       { val: standing.points, lab: "PTS" },
                       { val: standing.wins, lab: "Wins" },
@@ -175,18 +136,11 @@ export default function TopDriversSection({
                       <div
                         key={i}
                         className="py-4 text-center"
-                        style={{
-                          borderRight:
-                            i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none",
-                        }}
+                        style={{ borderRight: i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none" }}
                       >
                         <div
                           className="font-display font-black text-white leading-none"
-                          style={{
-                            fontFamily: "'Barlow Condensed', sans-serif",
-                            fontWeight: 800,
-                            fontSize: "1.5rem",
-                          }}
+                          style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 800, fontSize: "1.5rem" }}
                         >
                           {s.val}
                         </div>
@@ -204,9 +158,7 @@ export default function TopDriversSection({
       {/* Mobile CTA */}
       <div className="md:hidden mt-6">
         <Link href="/drivers">
-          <button className="btn-primary w-full justify-center">
-            View All Drivers
-          </button>
+          <button className="btn-primary w-full justify-center">View All Drivers</button>
         </Link>
       </div>
     </section>

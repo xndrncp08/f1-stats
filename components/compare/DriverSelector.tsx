@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -22,63 +21,115 @@ export default function DriverSelector({
   onDriver2Change,
   allDrivers,
 }: DriverSelectorProps) {
+  const selectStyle = {
+    fontFamily: "'Barlow Condensed', sans-serif",
+    fontWeight: 700,
+    fontSize: "1rem",
+    letterSpacing: "0.04em",
+    borderRadius: 0,
+  };
+
   return (
-    <Card className="bg-zinc-900 border-zinc-800 mb-12 rounded-none overflow-hidden">
-      <div className="h-1 bg-red-600" />
-      <CardHeader className="border-b border-zinc-800/50 bg-zinc-900/50 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-red-600" />
-          <CardTitle className="text-2xl font-black text-white tracking-tight">
-            SELECT DRIVERS
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="p-8">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="text-sm text-zinc-500 mb-3 block uppercase tracking-wider font-bold">
-              Driver 1
-            </label>
-            <Select value={driver1Id} onValueChange={onDriver1Change}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-14 rounded-none font-bold text-lg">
-                <SelectValue placeholder="Select driver" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700 rounded-none">
-                {allDrivers?.map((driver: any) => (
-                  <SelectItem
-                    key={driver.driverId}
-                    value={driver.driverId}
-                    className="text-white hover:bg-zinc-700 font-bold"
-                  >
-                    {driver.givenName} {driver.familyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div className="max-w-7xl mx-auto px-6 mb-12">
+      <div
+        className="relative overflow-hidden"
+        style={{
+          background: "#111",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#E10600]" />
+
+        <div className="p-8">
+          <span className="label-overline block mb-6">Select Drivers</span>
+
+          <div className="grid md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
+            {/* Driver 1 */}
+            <div>
+              <div className="stat-label mb-3" style={{ color: "#E10600" }}>
+                Driver 1
+              </div>
+              <Select value={driver1Id} onValueChange={onDriver1Change}>
+                <SelectTrigger
+                  className="h-12 text-white border-white/10 bg-white/[0.03] focus:ring-0 focus:ring-offset-0"
+                  style={{ ...selectStyle, borderLeft: "2px solid #E10600" }}
+                >
+                  <SelectValue placeholder="Select driver" />
+                </SelectTrigger>
+                <SelectContent
+                  className="border-white/10 max-h-[320px]"
+                  style={{ background: "#141414", borderRadius: 0 }}
+                >
+                  {allDrivers?.map((driver: any) => (
+                    <SelectItem
+                      key={driver.driverId}
+                      value={driver.driverId}
+                      className="text-white focus:bg-white/10 focus:text-white"
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {driver.givenName} {driver.familyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* VS divider */}
+            <div className="flex items-center justify-center">
+              <div
+                className="px-4 py-2 text-center"
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: 900,
+                  fontSize: "1.25rem",
+                  letterSpacing: "0.1em",
+                  color: "rgba(255,255,255,0.2)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                }}
+              >
+                VS
+              </div>
+            </div>
+
+            {/* Driver 2 */}
+            <div>
+              <div className="stat-label mb-3">Driver 2</div>
+              <Select value={driver2Id} onValueChange={onDriver2Change}>
+                <SelectTrigger
+                  className="h-12 text-white border-white/10 bg-white/[0.03] focus:ring-0 focus:ring-offset-0"
+                  style={{
+                    ...selectStyle,
+                    borderLeft: "2px solid rgba(255,255,255,0.3)",
+                  }}
+                >
+                  <SelectValue placeholder="Select driver" />
+                </SelectTrigger>
+                <SelectContent
+                  className="border-white/10 max-h-[320px]"
+                  style={{ background: "#141414", borderRadius: 0 }}
+                >
+                  {allDrivers?.map((driver: any) => (
+                    <SelectItem
+                      key={driver.driverId}
+                      value={driver.driverId}
+                      className="text-white focus:bg-white/10 focus:text-white"
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {driver.givenName} {driver.familyName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div>
-            <label className="text-sm text-zinc-500 mb-3 block uppercase tracking-wider font-bold">
-              Driver 2
-            </label>
-            <Select value={driver2Id} onValueChange={onDriver2Change}>
-              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white h-14 rounded-none font-bold text-lg">
-                <SelectValue placeholder="Select driver" />
-              </SelectTrigger>
-              <SelectContent className="bg-zinc-800 border-zinc-700 rounded-none">
-                {allDrivers?.map((driver: any) => (
-                  <SelectItem
-                    key={driver.driverId}
-                    value={driver.driverId}
-                    className="text-white hover:bg-zinc-700 font-bold"
-                  >
-                    {driver.givenName} {driver.familyName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -243,4 +243,3 @@ export async function getStatus(statusId: string) {
   const data = await fetchFromAPI<any>(`/status/${statusId}.json`);
   return data.MRData.StatusTable.Status[0];
 }
-  

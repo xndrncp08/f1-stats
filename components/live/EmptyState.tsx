@@ -1,17 +1,26 @@
-import { Card, CardContent } from "@/components/ui/card";
-
 export default function EmptyState() {
   return (
-    <Card className="bg-zinc-900 border-zinc-800 rounded-none overflow-hidden">
-      <div className="h-1 bg-zinc-700" />
-      <CardContent className="py-32 text-center">
-        <p className="text-zinc-400 mb-4 text-xl font-bold uppercase tracking-wider">
+    <div
+      className="relative overflow-hidden"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div className="h-[2px]" style={{ background: "rgba(255,255,255,0.1)" }} />
+      <div className="py-32 text-center px-6">
+        <div
+          className="mb-3"
+          style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 800,
+            fontSize: "1.25rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "rgba(255,255,255,0.25)",
+          }}
+        >
           No telemetry data available
-        </p>
-        <p className="text-sm text-zinc-600 font-semibold uppercase tracking-wider">
-          Start the demo to see simulated real-time telemetry
-        </p>
-      </CardContent>
-    </Card>
+        </div>
+        <p className="data-readout">Start the demo to see simulated real-time telemetry</p>
+      </div>
+    </div>
   );
 }

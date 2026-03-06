@@ -1,6 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-
 interface SessionControlProps {
   isLive: boolean;
   onToggle: () => void;
@@ -8,43 +5,48 @@ interface SessionControlProps {
 
 export default function SessionControl({ isLive, onToggle }: SessionControlProps) {
   return (
-    <Card className="bg-zinc-900 border-zinc-800 mb-12 rounded-none overflow-hidden">
-      <div className="h-1 bg-red-600" />
-      <CardHeader className="border-b border-zinc-800/50 bg-zinc-900/50 backdrop-blur">
-        <div className="flex items-center justify-between">
+    <div
+      className="relative overflow-hidden mb-10"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#E10600]" />
+      <div className="p-6 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <span className="label-overline block mb-2">Session Status</span>
           <div className="flex items-center gap-3">
-            <div className="h-8 w-1 bg-red-600" />
-            <CardTitle className="text-2xl font-black text-white tracking-tight">
-              SESSION STATUS
-            </CardTitle>
+            <div
+              className="w-2.5 h-2.5 rounded-full"
+              style={{
+                background: isLive ? "#E10600" : "rgba(255,255,255,0.2)",
+                boxShadow: isLive ? "0 0 0 0 rgba(225,6,0,0.4)" : "none",
+                animation: isLive ? "pulse-live 1.5s ease-in-out infinite" : "none",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 700,
+                fontSize: "0.875rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                color: isLive ? "white" : "rgba(255,255,255,0.35)",
+              }}
+            >
+              {isLive ? "Demo Telemetry Streaming" : "No Active Session"}
+            </span>
           </div>
-          <Button
-            onClick={onToggle}
-            className={`rounded-none font-bold px-8 h-12 ${
-              isLive
-                ? "bg-red-600 hover:bg-red-700 text-white"
-                : "bg-white text-black hover:bg-white/90"
-            }`}
-          >
-            {isLive ? "STOP DEMO" : "START DEMO"}
-          </Button>
+          {!isLive && (
+            <p className="data-readout mt-2">Press Start Demo to begin simulated data stream</p>
+          )}
         </div>
-      </CardHeader>
-      <CardContent className="p-8">
-        <div className="flex items-center gap-4">
-          <div
-            className={`h-4 w-4 rounded-full ${isLive ? "bg-red-600 animate-pulse" : "bg-zinc-700"}`}
-          />
-          <p className="text-lg font-bold text-white uppercase tracking-wider">
-            {isLive ? "DEMO TELEMETRY STREAMING" : "NO ACTIVE SESSION"}
-          </p>
-        </div>
-        {!isLive && (
-          <p className="text-zinc-500 mt-3 text-sm font-semibold">
-            Click "START DEMO" to see simulated real-time data
-          </p>
-        )}
-      </CardContent>
-    </Card>
+
+        <button
+          onClick={onToggle}
+          className={isLive ? "btn-ghost" : "btn-primary"}
+        >
+          {isLive ? "Stop Demo" : "Start Demo"}
+        </button>
+      </div>
+    </div>
   );
 }

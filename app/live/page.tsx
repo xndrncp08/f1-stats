@@ -16,19 +16,16 @@ export default function LivePage() {
         setTelemetryData((prev) => {
           const newData = [...prev];
           const time = new Date().toLocaleTimeString();
-
           newData.push({
             time,
             verstappen: Math.floor(Math.random() * 50) + 280,
             hamilton: Math.floor(Math.random() * 50) + 275,
             leclerc: Math.floor(Math.random() * 50) + 270,
           });
-
           if (newData.length > 20) newData.shift();
           return newData;
         });
       }, 1000);
-
       return () => clearInterval(interval);
     }
   }, [isLive]);
@@ -41,20 +38,19 @@ export default function LivePage() {
   }));
 
   const driverKeys = [
-    { key: "verstappen", name: "#1 VERSTAPPEN", color: "#3671C6" },
-    { key: "hamilton", name: "#44 HAMILTON", color: "#27F4D2" },
-    { key: "leclerc", name: "#16 LECLERC", color: "#E8002D" },
+    { key: "verstappen", name: "VER #1", color: "#3671C6" },
+    { key: "hamilton", name: "HAM #44", color: "#27F4D2" },
+    { key: "leclerc", name: "LEC #16", color: "#E8002D" },
   ];
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen" style={{ background: "#080808" }}>
       <LiveHero />
-
-      <div className="container mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         <SessionControl isLive={isLive} onToggle={() => setIsLive(!isLive)} />
 
         {telemetryData.length > 0 ? (
-          <div className="space-y-8">
+          <div className="space-y-6">
             <TelemetryChart
               data={telemetryData}
               title="Speed Comparison (km/h)"

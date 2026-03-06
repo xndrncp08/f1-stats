@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPercentage } from "@/lib/utils/format";
 import { DriverStats } from "@/lib/types/driver";
 
@@ -11,57 +10,85 @@ export default function AdditionalStats({
   driverStats,
   isDriver1,
 }: AdditionalStatsProps) {
+  const accentColor = isDriver1 ? "#E10600" : "rgba(255,255,255,0.7)";
+
+  const stats = [
+    {
+      label: "Fastest Laps",
+      value: driverStats.totalFastestLaps,
+      highlight: true,
+    },
+    { label: "DNFs", value: driverStats.dnfCount, highlight: false },
+    {
+      label: "Retirement Rate",
+      value: formatPercentage(driverStats.retirementRate),
+      highlight: false,
+    },
+    {
+      label: "Points / Race",
+      value: driverStats.pointsPerRace.toFixed(2),
+      highlight: true,
+    },
+  ];
+
   return (
-    <Card className="bg-zinc-900 border-zinc-800 rounded-none overflow-hidden">
-      <div className={`h-1 ${isDriver1 ? "bg-red-600" : "bg-white"}`} />
-      <CardHeader className="border-b border-zinc-800/50">
-        <div className="flex items-center gap-3">
-          <div className={`h-6 w-1 ${isDriver1 ? "bg-red-600" : "bg-white"}`} />
-          <CardTitle className="text-xl font-black text-white tracking-tight uppercase">
-            {driverStats.driver.familyName} - Additional Stats
-          </CardTitle>
+    <div
+      className="relative overflow-hidden"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div className="h-[3px]" style={{ background: accentColor }} />
+
+      <div
+        className="p-6 border-b"
+        style={{ borderColor: "rgba(255,255,255,0.07)" }}
+      >
+        <span
+          className="label-overline"
+          style={{ color: isDriver1 ? "#E10600" : "rgba(255,255,255,0.5)" }}
+        >
+          {driverStats.driver.familyName}
+        </span>
+        <div
+          className="mt-1"
+          style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 800,
+            fontSize: "1.1rem",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "rgba(255,255,255,0.6)",
+          }}
+        >
+          Additional Stats
         </div>
-      </CardHeader>
-      <CardContent className="p-8">
-        <div className="space-y-6">
-          <div className="bg-zinc-800/50 p-4 rounded-sm border border-zinc-700/50">
-            <div className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2">
-              Fastest Laps
-            </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-0">
+        {stats.map((stat, i) => (
+          <div
+            key={i}
+            className="p-5"
+            style={{
+              borderRight:
+                i % 2 === 0 ? "1px solid rgba(255,255,255,0.07)" : "none",
+              borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.07)" : "none",
+            }}
+          >
+            <div className="stat-label mb-2">{stat.label}</div>
             <div
-              className={`text-3xl font-black ${isDriver1 ? "text-red-400" : "text-white"}`}
+              style={{
+                fontFamily: "'Barlow Condensed', sans-serif",
+                fontWeight: 900,
+                fontSize: "2rem",
+                lineHeight: 1,
+                color: stat.highlight ? accentColor : "rgba(255,255,255,0.7)",
+              }}
             >
-              {driverStats.totalFastestLaps}
+              {stat.value}
             </div>
           </div>
-          <div className="bg-zinc-800/50 p-4 rounded-sm border border-zinc-700/50">
-            <div className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2">
-              DNFs
-            </div>
-            <div className="text-3xl font-black text-white">
-              {driverStats.dnfCount}
-            </div>
-          </div>
-          <div className="bg-zinc-800/50 p-4 rounded-sm border border-zinc-700/50">
-            <div className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2">
-              Retirement Rate
-            </div>
-            <div className="text-3xl font-black text-white">
-              {formatPercentage(driverStats.retirementRate)}
-            </div>
-          </div>
-          <div className="bg-zinc-800/50 p-4 rounded-sm border border-zinc-700/50">
-            <div className="text-xs text-zinc-500 uppercase tracking-wider font-bold mb-2">
-              Points Per Race
-            </div>
-            <div
-              className={`text-3xl font-black ${isDriver1 ? "text-red-400" : "text-white"}`}
-            >
-              {driverStats.pointsPerRace.toFixed(2)}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        ))}
+      </div>
+    </div>
   );
 }

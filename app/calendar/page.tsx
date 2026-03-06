@@ -18,31 +18,24 @@ export default function CalendarPage() {
       try {
         const data = await getRaceSchedule(season);
         setRaces(data || []);
-      } catch (error) {
-        console.error("Error fetching calendar:", error);
+      } catch {
         setRaces([]);
       } finally {
         setIsLoading(false);
       }
     }
-
     fetchRaces();
   }, [season]);
 
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen" style={{ background: "#080808" }}>
       <CalendarHero season={season} />
-
-      <div className="container mx-auto px-4 py-12">
+      <div className="py-10">
         <SeasonSelector season={season} onSeasonChange={setSeason} />
-
-        {/* Loading State */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-32">
-            <div className="w-16 h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4" />
-            <p className="text-zinc-500 font-bold uppercase tracking-wider">
-              Loading races...
-            </p>
+            <div className="w-8 h-8 border-2 border-[#E10600] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="data-readout">Loading races...</p>
           </div>
         ) : (
           <RaceGrid races={races} season={season} currentYear={currentYear} />

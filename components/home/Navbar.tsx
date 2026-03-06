@@ -1,180 +1,115 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const navLinks = [
+    { href: "/drivers", label: "Drivers" },
+    { href: "/calendar", label: "Calendar" },
+    { href: "/compare", label: "Compare" },
+  ];
+
   return (
-    <nav className="w-full sticky top-0 z-50">
-      <Card
-        className={`bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-800/95 backdrop-blur-xl border-zinc-700/50 overflow-hidden shadow-2xl rounded-none transition-all duration-500 ${
-          isScrolled ? "shadow-red-900/20" : ""
-        }`}
-      >
-        {/* Carbon fiber texture overlay */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
-            isScrolled ? "opacity-40" : "opacity-100"
-          }`}
-          style={{
-            backgroundImage: `
-              repeating-linear-gradient(
-                45deg,
-                rgba(0, 0, 0, 0.8) 0px,
-                rgba(0, 0, 0, 0.8) 1px,
-                rgba(40, 40, 40, 0.9) 1px,
-                rgba(40, 40, 40, 0.9) 2px,
-                rgba(0, 0, 0, 0.8) 2px,
-                rgba(0, 0, 0, 0.8) 3px,
-                rgba(60, 60, 60, 0.7) 3px,
-                rgba(60, 60, 60, 0.7) 4px
-              ),
-              repeating-linear-gradient(
-                -45deg,
-                rgba(0, 0, 0, 0.8) 0px,
-                rgba(0, 0, 0, 0.8) 1px,
-                rgba(40, 40, 40, 0.9) 1px,
-                rgba(40, 40, 40, 0.9) 2px,
-                rgba(0, 0, 0, 0.8) 2px,
-                rgba(0, 0, 0, 0.8) 3px,
-                rgba(60, 60, 60, 0.7) 3px,
-                rgba(60, 60, 60, 0.7) 4px
-              ),
-              linear-gradient(
-                180deg,
-                rgba(80, 80, 80, 0.15) 0%,
-                rgba(40, 40, 40, 0.2) 50%,
-                rgba(20, 20, 20, 0.25) 100%
-              )
-            `,
-            backgroundSize: "4px 4px, 4px 4px, 100% 100%",
-          }}
-        />
+    <nav
+      className={`w-full sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "carbon-bg border-b border-white/[0.07] shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+          : "bg-transparent"
+      }`}
+    >
+      {/* Top red rule */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#E10600]" />
 
-        {/* Carbon fiber shine/reflection */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
-            isScrolled ? "opacity-50" : "opacity-100"
-          }`}
-          style={{
-            background: `
-              linear-gradient(
-                90deg,
-                transparent 0%,
-                rgba(255, 255, 255, 0.03) 25%,
-                rgba(255, 255, 255, 0.08) 50%,
-                rgba(255, 255, 255, 0.03) 75%,
-                transparent 100%
-              )
-            `,
-          }}
-        />
-
-        {/* Glossy overlay when scrolled */}
-        {isScrolled && (
-          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/5 to-transparent pointer-events-none" />
-        )}
-
-        {/* Animated background gradients */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl transition-all duration-700 opacity-50" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-600/10 rounded-full blur-3xl transition-all duration-700 opacity-50" />
-
-        {/* Accent line */}
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-red-600 via-red-500 to-red-600 animate-pulse" />
-
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between relative">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-2xl font-black text-white tracking-tighter">
-              F1<span className="text-red-600">DASH</span>
-            </span>
-          </Link>
-
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/drivers"
-              className="text-sm font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider"
-            >
-              Drivers
-            </Link>
-            <Link
-              href="/calendar"
-              className="text-sm font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider"
-            >
-              Calendar
-            </Link>
-            <Link
-              href="/compare"
-              className="text-sm font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider"
-            >
-              Compare
-            </Link>
-            <Link href="/live">
-              <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl uppercase tracking-wider text-sm px-6 shadow-lg shadow-red-900/30 hover:shadow-red-900/50 transition-all duration-300 hover:scale-[1.02]">
-                Live
-              </Button>
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden text-white hover:text-red-400 transition-colors text-sm font-bold uppercase tracking-wider"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Toggle menu"
+      <div className="max-w-7xl mx-auto px-6 h-[60px] flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-0 group">
+          <span
+            className="font-display font-black text-[1.4rem] tracking-tighter text-white leading-none select-none"
+            style={{ fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: "-0.01em" }}
           >
-            {isMobileMenuOpen ? "Close" : "Menu"}
-          </button>
+            F1<span style={{ color: "#E10600" }}>DASH</span>
+          </span>
+        </Link>
+
+        {/* Desktop nav */}
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map((link) => {
+            const active = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative px-4 py-2 text-[0.75rem] font-display font-700 tracking-[0.12em] uppercase transition-colors duration-150 ${
+                  active ? "text-white" : "text-white/50 hover:text-white/80"
+                }`}
+                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}
+              >
+                {active && (
+                  <span className="absolute bottom-0 left-4 right-4 h-[2px] bg-[#E10600]" />
+                )}
+                {link.label}
+              </Link>
+            );
+          })}
+
+          <div className="w-px h-5 bg-white/10 mx-3" />
+
+          <Link href="/live">
+            <button className="btn-primary flex items-center gap-2">
+              <span className="live-dot" />
+              Live
+            </button>
+          </Link>
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-zinc-800/50 bg-zinc-900/50 backdrop-blur">
-            <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
+        {/* Mobile toggle */}
+        <button
+          className="md:hidden flex flex-col gap-[5px] p-2"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label="Toggle menu"
+        >
+          <span className={`block w-5 h-[1.5px] bg-white transition-transform duration-200 ${isMobileMenuOpen ? "rotate-45 translate-y-[6.5px]" : ""}`} />
+          <span className={`block w-5 h-[1.5px] bg-white transition-opacity duration-200 ${isMobileMenuOpen ? "opacity-0" : ""}`} />
+          <span className={`block w-5 h-[1.5px] bg-white transition-transform duration-200 ${isMobileMenuOpen ? "-rotate-45 -translate-y-[6.5px]" : ""}`} />
+        </button>
+      </div>
+
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden carbon-bg border-t border-white/[0.07] animate-fade-in">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex flex-col gap-1">
+            {navLinks.map((link) => (
               <Link
-                href="/drivers"
-                className="text-base font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider py-2"
+                key={link.href}
+                href={link.href}
+                className="px-0 py-3 text-[0.8125rem] font-display font-700 tracking-[0.12em] uppercase text-white/60 hover:text-white border-b border-white/[0.05] last:border-0 transition-colors"
+                style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700 }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Drivers
+                {link.label}
               </Link>
-              <Link
-                href="/calendar"
-                className="text-base font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Calendar
-              </Link>
-              <Link
-                href="/compare"
-                className="text-base font-bold text-zinc-300 hover:text-red-400 transition-colors uppercase tracking-wider py-2"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Compare
-              </Link>
-              <Link href="/live" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold rounded-xl uppercase tracking-wider shadow-lg shadow-red-900/30 hover:shadow-red-900/50 transition-all duration-300">
-                  Live
-                </Button>
-              </Link>
-            </div>
+            ))}
+            <Link href="/live" className="mt-3" onClick={() => setIsMobileMenuOpen(false)}>
+              <button className="btn-primary w-full justify-center gap-2">
+                <span className="live-dot" />
+                Live Telemetry
+              </button>
+            </Link>
           </div>
-        )}
-      </Card>
+        </div>
+      )}
     </nav>
   );
 };

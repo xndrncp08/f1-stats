@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverStats } from "@/lib/types/driver";
 
 interface DriverProfileCardProps {
@@ -12,70 +11,123 @@ export default function DriverProfileCard({
   isDriver1,
   currentTeam,
 }: DriverProfileCardProps) {
+  const accentColor = isDriver1 ? "#E10600" : "rgba(255,255,255,0.55)";
+
   return (
-    <Card className="bg-zinc-900 border-zinc-800 rounded-none overflow-hidden group hover:border-red-600 transition-all duration-300">
+    <div
+      className="relative overflow-hidden"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      {/* Top accent */}
+      <div className="h-[3px]" style={{ background: accentColor }} />
+
+      {/* Number watermark */}
       <div
-        className={`h-1 ${isDriver1 ? "bg-gradient-to-r from-red-600 to-red-400" : "bg-gradient-to-r from-white to-zinc-300"}`}
-      />
-      <CardHeader className="pb-4 pt-8 relative">
-        <div className="absolute top-8 right-8 text-8xl font-black text-white/5 leading-none">
-          {driverStats.driver.permanentNumber || "#"}
-        </div>
-        <div className="relative">
-          <div
-            className={`inline-block px-3 py-1 mb-3 ${
-              isDriver1
-                ? "bg-red-600/20 border border-red-600/30"
-                : "bg-white/10 border border-white/20"
-            }`}
+        className="absolute top-4 right-5 font-display font-black pointer-events-none select-none leading-none"
+        style={{
+          fontFamily: "'Barlow Condensed', sans-serif",
+          fontWeight: 900,
+          fontSize: "7rem",
+          color: `${isDriver1 ? "#E10600" : "rgba(255,255,255,1)"}0a`,
+          lineHeight: 1,
+        }}
+      >
+        {driverStats.driver.permanentNumber || "#"}
+      </div>
+
+      <div className="p-8 relative">
+        {/* Driver label */}
+        <div
+          className="inline-flex items-center mb-5 px-2 py-1"
+          style={{
+            background: isDriver1
+              ? "rgba(225,6,0,0.1)"
+              : "rgba(255,255,255,0.05)",
+            border: `1px solid ${isDriver1 ? "rgba(225,6,0,0.25)" : "rgba(255,255,255,0.1)"}`,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 700,
+              fontSize: "0.625rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: accentColor,
+            }}
           >
-            <span
-              className={`text-xs font-bold uppercase tracking-wider ${
-                isDriver1 ? "text-red-400" : "text-white"
-              }`}
-            >
-              Driver {isDriver1 ? "1" : "2"}
-            </span>
-          </div>
-          <CardTitle className="text-3xl font-black text-white mb-1 tracking-tight">
+            Driver {isDriver1 ? "1" : "2"}
+          </span>
+        </div>
+
+        {/* Name */}
+        <div className="mb-6">
+          <div
+            className="leading-none"
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 600,
+              fontSize: "1.1rem",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.4)",
+              letterSpacing: "0.04em",
+            }}
+          >
             {driverStats.driver.givenName}
-          </CardTitle>
-          <CardTitle className="text-3xl font-black text-white/70 tracking-tight uppercase">
+          </div>
+          <div
+            className="text-white leading-none"
+            style={{
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 900,
+              fontSize: "2.5rem",
+              textTransform: "uppercase",
+              lineHeight: 1,
+            }}
+          >
             {driverStats.driver.familyName}
-          </CardTitle>
-          <p className="text-zinc-500 mt-3 text-sm font-semibold uppercase tracking-wider">
-            {driverStats.driver.nationality}
-          </p>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4 border-t border-zinc-800 pt-6">
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500 uppercase text-xs font-bold tracking-wider">
-              Current Team
-            </span>
-            <span className="text-white font-bold text-sm">{currentTeam}</span>
           </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500 uppercase text-xs font-bold tracking-wider">
-              Career Span
-            </span>
-            <span className="text-white font-bold text-sm">
-              {driverStats.careerSpan.yearsActive} years
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-zinc-500 uppercase text-xs font-bold tracking-wider">
-              Championships
-            </span>
-            <span
-              className={`font-black text-2xl ${isDriver1 ? "text-red-400" : "text-white"}`}
-            >
-              {driverStats.totalChampionships}
+          <div className="flex items-center gap-2 mt-2">
+            <div className="h-px w-6" style={{ background: accentColor }} />
+            <span className="data-readout">
+              {driverStats.driver.nationality}
             </span>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Stats table */}
+        <div className="border-t border-white/[0.06] pt-6 space-y-4">
+          {[
+            { label: "Current Team", value: currentTeam },
+            {
+              label: "Career Span",
+              value: `${driverStats.careerSpan.yearsActive} years`,
+            },
+            {
+              label: "Championships",
+              value: driverStats.totalChampionships,
+              highlight: true,
+            },
+          ].map((row, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <span className="stat-label" style={{ marginTop: 0 }}>
+                {row.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Barlow Condensed', sans-serif",
+                  fontWeight: row.highlight ? 900 : 700,
+                  fontSize: row.highlight ? "1.75rem" : "0.875rem",
+                  color: row.highlight ? accentColor : "rgba(255,255,255,0.75)",
+                  lineHeight: 1,
+                }}
+              >
+                {row.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

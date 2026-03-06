@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPercentage } from "@/lib/utils/format";
 
 interface CompareStatItem {
@@ -20,87 +19,141 @@ export default function StatComparison({ compareStats }: StatComparisonProps) {
     isAverage: boolean = false,
   ) => {
     if (isAverage) {
-      // For averages (lower is better), flip the percentages
       const total = d1 + d2;
-      const d1Percent = total > 0 ? (d2 / total) * 100 : 50;
-      const d2Percent = total > 0 ? (d1 / total) * 100 : 50;
-      return { d1: d1Percent, d2: d2Percent };
+      return {
+        d1: total > 0 ? (d2 / total) * 100 : 50,
+        d2: total > 0 ? (d1 / total) * 100 : 50,
+      };
     }
-
     const total = d1 + d2;
-    const d1Percent = total > 0 ? (d1 / total) * 100 : 50;
-    const d2Percent = total > 0 ? (d2 / total) * 100 : 50;
-    return { d1: d1Percent, d2: d2Percent };
+    return {
+      d1: total > 0 ? (d1 / total) * 100 : 50,
+      d2: total > 0 ? (d2 / total) * 100 : 50,
+    };
+  };
+
+  const formatVal = (stat: CompareStatItem, val: number) => {
+    if (stat.isPercentage) return formatPercentage(val);
+    if (stat.isAverage) return val.toFixed(1);
+    return Math.round(val);
   };
 
   return (
-    <Card className="bg-zinc-900 border-zinc-800 rounded-none overflow-hidden mb-8">
-      <div className="h-1 bg-red-600" />
-      <CardHeader className="border-b border-zinc-800/50 bg-zinc-900/50 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-1 bg-red-600" />
-          <CardTitle className="text-2xl font-black text-white tracking-tight">
-            CAREER STATISTICS
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="p-8">
+    <div
+      className="relative overflow-hidden mb-10"
+      style={{ background: "#111", border: "1px solid rgba(255,255,255,0.07)" }}
+    >
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#E10600]" />
+
+      <div className="p-8">
+        <span className="label-overline block mb-8">Career Statistics</span>
+
         <div className="space-y-8">
           {compareStats.map((stat, index) => {
-            const percentages = getPercentageWidth(
+            const pct = getPercentageWidth(
               stat.d1,
               stat.d2,
               stat.isAverage || false,
             );
+            const d1Wins = pct.d1 > pct.d2;
 
             return (
               <div key={index}>
-                <div className="flex items-center justify-center mb-3">
-                  <span className="text-sm font-black text-zinc-500 uppercase tracking-wider">
+                {/* Label */}
+                <div className="text-center mb-3">
+                  <span
+                    style={{
+                      fontFamily: "'Barlow Condensed', sans-serif",
+                      fontWeight: 700,
+                      fontSize: "0.6875rem",
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,255,255,0.3)",
+                    }}
+                  >
                     {stat.label}
                   </span>
                 </div>
+
+                {/* Comparison row */}
                 <div className="flex items-center gap-4">
-                  <div className="flex-1 text-right">
-                    <span className="text-3xl font-black text-red-500">
-                      {stat.isPercentage
-                        ? formatPercentage(stat.d1)
-                        : stat.isAverage
-                          ? stat.d1.toFixed(1)
-                          : Math.round(stat.d1)}
+                  {/* D1 value */}
+                  <div className="w-20 text-right">
+                    <span
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 900,
+                        fontSize: "1.75rem",
+                        color: d1Wins ? "#E10600" : "rgba(255,255,255,0.6)",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {formatVal(stat, stat.d1)}
                     </span>
                   </div>
-                  <div className="flex-1 flex items-center gap-2">
-                    <div className="flex-1 h-12 bg-zinc-800 rounded-sm overflow-hidden flex border border-zinc-700">
-                      <div
-                        className="bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-end pr-3 transition-all duration-500"
-                        style={{ width: `${percentages.d1}%` }}
-                      >
-                        {percentages.d1 > 15 && (
-                          <span className="text-sm font-black text-white">
-                            {percentages.d1.toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className="bg-gradient-to-r from-white to-zinc-200 flex items-center justify-start pl-3 transition-all duration-500"
-                        style={{ width: `${percentages.d2}%` }}
-                      >
-                        {percentages.d2 > 15 && (
-                          <span className="text-sm font-black text-black">
-                            {percentages.d2.toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
+
+                  {/* Bar */}
+                  <div
+                    className="flex-1 h-10 flex overflow-hidden"
+                    style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+                  >
+                    <div
+                      className="flex items-center justify-end pr-2 transition-all duration-500"
+                      style={{
+                        width: `${pct.d1}%`,
+                        background: "linear-gradient(90deg, #8b0000, #E10600)",
+                      }}
+                    >
+                      {pct.d1 > 18 && (
+                        <span
+                          style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 700,
+                            fontSize: "0.65rem",
+                            color: "rgba(255,255,255,0.7)",
+                          }}
+                        >
+                          {pct.d1.toFixed(0)}%
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="flex items-center justify-start pl-2 transition-all duration-500"
+                      style={{
+                        width: `${pct.d2}%`,
+                        background:
+                          "linear-gradient(90deg, rgba(255,255,255,0.5), rgba(255,255,255,0.7))",
+                      }}
+                    >
+                      {pct.d2 > 18 && (
+                        <span
+                          style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontWeight: 700,
+                            fontSize: "0.65rem",
+                            color: "rgba(0,0,0,0.6)",
+                          }}
+                        >
+                          {pct.d2.toFixed(0)}%
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex-1 text-left">
-                    <span className="text-3xl font-black text-white">
-                      {stat.isPercentage
-                        ? formatPercentage(stat.d2)
-                        : stat.isAverage
-                          ? stat.d2.toFixed(1)
-                          : Math.round(stat.d2)}
+
+                  {/* D2 value */}
+                  <div className="w-20 text-left">
+                    <span
+                      style={{
+                        fontFamily: "'Barlow Condensed', sans-serif",
+                        fontWeight: 900,
+                        fontSize: "1.75rem",
+                        color: !d1Wins
+                          ? "rgba(255,255,255,0.9)"
+                          : "rgba(255,255,255,0.5)",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {formatVal(stat, stat.d2)}
                     </span>
                   </div>
                 </div>
@@ -108,7 +161,7 @@ export default function StatComparison({ compareStats }: StatComparisonProps) {
             );
           })}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
