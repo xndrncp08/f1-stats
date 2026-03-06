@@ -1,0 +1,464 @@
+import Link from "next/link";
+
+const CIRCUITS = [
+  {
+    id: "albert_park",
+    name: "Albert Park Circuit",
+    location: "Melbourne, Australia",
+    country: "Australia",
+    length: "5.278 km",
+    laps: 58,
+    distance: "306.124 km",
+    lapRecord: "1:20.235",
+    lapRecordHolder: "Charles Leclerc",
+    lapRecordYear: 2022,
+    firstGP: 1996,
+    description: "A street circuit built around a lake in Albert Park, famous for hosting the season-opening Australian Grand Prix. Its mix of fast straights and tight chicanes makes for exciting racing.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Australia_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "bahrain",
+    name: "Bahrain International Circuit",
+    location: "Sakhir, Bahrain",
+    country: "Bahrain",
+    length: "5.412 km",
+    laps: 57,
+    distance: "308.238 km",
+    lapRecord: "1:31.447",
+    lapRecordHolder: "Pedro de la Rosa",
+    lapRecordYear: 2005,
+    firstGP: 2004,
+    description: "Built in the desert, the Bahrain circuit is known for its unique atmosphere under the floodlights. Abrasive surface and long straights make tyre management and overtaking key factors.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Bahrain_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "jeddah",
+    name: "Jeddah Corniche Circuit",
+    location: "Jeddah, Saudi Arabia",
+    country: "Saudi Arabia",
+    length: "6.174 km",
+    laps: 50,
+    distance: "308.45 km",
+    lapRecord: "1:30.734",
+    lapRecordHolder: "Lewis Hamilton",
+    lapRecordYear: 2021,
+    firstGP: 2021,
+    description: "One of the fastest street circuits in F1, Jeddah features high-speed sweeping corners along the Red Sea corniche. Its narrow layout demands maximum commitment.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Saudi_Arabia_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "shanghai",
+    name: "Shanghai International Circuit",
+    location: "Shanghai, China",
+    country: "China",
+    length: "5.451 km",
+    laps: 56,
+    distance: "305.066 km",
+    lapRecord: "1:32.238",
+    lapRecordHolder: "Michael Schumacher",
+    lapRecordYear: 2004,
+    firstGP: 2004,
+    description: "Designed by Hermann Tilke, Shanghai's unique layout is inspired by the Chinese character 'shang'. The long back straight and sweeping Turn 1 create exciting overtaking opportunities.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/China_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "miami",
+    name: "Miami International Autodrome",
+    location: "Miami, Florida, USA",
+    country: "United States",
+    length: "5.412 km",
+    laps: 57,
+    distance: "308.326 km",
+    lapRecord: "1:29.708",
+    lapRecordHolder: "Max Verstappen",
+    lapRecordYear: 2023,
+    firstGP: 2022,
+    description: "A purpose-built street circuit around Hard Rock Stadium. One of the most glamorous events on the calendar with a mix of high-speed sections and tight chicanes.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Miami_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "imola",
+    name: "Autodromo Enzo e Dino Ferrari",
+    location: "Imola, Italy",
+    country: "Italy",
+    length: "4.909 km",
+    laps: 63,
+    distance: "309.049 km",
+    lapRecord: "1:15.484",
+    lapRecordHolder: "Rubens Barrichello",
+    lapRecordYear: 2004,
+    firstGP: 1980,
+    description: "One of the most historic circuits in F1, Imola is a flowing track with minimal runoff that rewards driver commitment. Named after the legendary Enzo Ferrari.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Emilia_Romagna_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "monaco",
+    name: "Circuit de Monaco",
+    location: "Monte Carlo, Monaco",
+    country: "Monaco",
+    length: "3.337 km",
+    laps: 78,
+    distance: "260.286 km",
+    lapRecord: "1:12.909",
+    lapRecordHolder: "Rubens Barrichello",
+    lapRecordYear: 2004,
+    firstGP: 1950,
+    description: "The crown jewel of Formula 1. Monaco's narrow streets, elevation changes, and unforgiving barriers have made it the most prestigious race in the world. Qualifying is everything here.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Monaco_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "villeneuve",
+    name: "Circuit Gilles Villeneuve",
+    location: "Montreal, Canada",
+    country: "Canada",
+    length: "4.361 km",
+    laps: 70,
+    distance: "305.27 km",
+    lapRecord: "1:13.078",
+    lapRecordHolder: "Valtteri Bottas",
+    lapRecordYear: 2019,
+    firstGP: 1978,
+    description: "Built on an artificial island in the St. Lawrence River. Its long straights and the infamous 'Wall of Champions' make it a fan favourite.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Canada_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "catalunya",
+    name: "Circuit de Barcelona-Catalunya",
+    location: "Barcelona, Spain",
+    country: "Spain",
+    length: "4.657 km",
+    laps: 66,
+    distance: "307.236 km",
+    lapRecord: "1:18.149",
+    lapRecordHolder: "Max Verstappen",
+    lapRecordYear: 2021,
+    firstGP: 1991,
+    description: "A technical circuit that teams know well from pre-season testing. Barcelona rewards aerodynamic efficiency across its mix of slow and high-speed corners.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Spain_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "red_bull_ring",
+    name: "Red Bull Ring",
+    location: "Spielberg, Austria",
+    country: "Austria",
+    length: "4.318 km",
+    laps: 71,
+    distance: "306.452 km",
+    lapRecord: "1:05.619",
+    lapRecordHolder: "Carlos Sainz",
+    lapRecordYear: 2020,
+    firstGP: 1970,
+    description: "Nestled in the Styrian mountains, the Red Bull Ring features steep elevation changes and long straights that create outstanding overtaking opportunities.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Austria_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "silverstone",
+    name: "Silverstone Circuit",
+    location: "Silverstone, England",
+    country: "Great Britain",
+    length: "5.891 km",
+    laps: 52,
+    distance: "306.198 km",
+    lapRecord: "1:27.097",
+    lapRecordHolder: "Max Verstappen",
+    lapRecordYear: 2020,
+    firstGP: 1950,
+    description: "The home of British motorsport and venue of the very first F1 World Championship race in 1950. High-speed corners like Copse and Maggots-Becketts-Chapel are legendary.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Great_Britain_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "hungaroring",
+    name: "Hungaroring",
+    location: "Budapest, Hungary",
+    country: "Hungary",
+    length: "4.381 km",
+    laps: 70,
+    distance: "306.63 km",
+    lapRecord: "1:16.627",
+    lapRecordHolder: "Lewis Hamilton",
+    lapRecordYear: 2020,
+    firstGP: 1986,
+    description: "Often described as 'Monaco without the barriers'. A tight and twisty circuit where qualifying performance is crucial and strategy often decides the result.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Hungary_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "spa",
+    name: "Circuit de Spa-Francorchamps",
+    location: "Spa, Belgium",
+    country: "Belgium",
+    length: "7.004 km",
+    laps: 44,
+    distance: "308.052 km",
+    lapRecord: "1:46.286",
+    lapRecordHolder: "Valtteri Bottas",
+    lapRecordYear: 2018,
+    firstGP: 1950,
+    description: "Many consider Spa-Francorchamps the greatest circuit in the world. Eau Rouge/Raidillon is one of the most thrilling sections in motorsport. The Ardennes forest provides a stunning backdrop.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Belgium_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "monza",
+    name: "Autodromo Nazionale di Monza",
+    location: "Monza, Italy",
+    country: "Italy",
+    length: "5.793 km",
+    laps: 53,
+    distance: "306.72 km",
+    lapRecord: "1:21.046",
+    lapRecordHolder: "Rubens Barrichello",
+    lapRecordYear: 2004,
+    firstGP: 1950,
+    description: "The Temple of Speed. Monza is the fastest circuit in F1, where cars reach over 360 km/h. The passionate Tifosi make this one of the most electric atmospheres in sport.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Italy_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "baku",
+    name: "Baku City Circuit",
+    location: "Baku, Azerbaijan",
+    country: "Azerbaijan",
+    length: "6.003 km",
+    laps: 51,
+    distance: "306.049 km",
+    lapRecord: "1:43.009",
+    lapRecordHolder: "Charles Leclerc",
+    lapRecordYear: 2019,
+    firstGP: 2017,
+    description: "A stunning street circuit combining the longest straight in F1 with an incredibly tight castle section. Baku is notorious for dramatic late-race incidents and unexpected results.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Azerbaijan_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "marina_bay",
+    name: "Marina Bay Street Circuit",
+    location: "Singapore",
+    country: "Singapore",
+    length: "4.94 km",
+    laps: 62,
+    distance: "306.143 km",
+    lapRecord: "1:35.867",
+    lapRecordHolder: "Kevin Magnussen",
+    lapRecordYear: 2018,
+    firstGP: 2008,
+    description: "The only night race in F1 takes place against the spectacular Singapore skyline. One of the most physically demanding circuits on the calendar.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Singapore_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "suzuka",
+    name: "Suzuka International Racing Course",
+    location: "Suzuka, Japan",
+    country: "Japan",
+    length: "5.807 km",
+    laps: 53,
+    distance: "307.471 km",
+    lapRecord: "1:30.983",
+    lapRecordHolder: "Lewis Hamilton",
+    lapRecordYear: 2019,
+    firstGP: 1987,
+    description: "Consistently voted drivers' favourite. Suzuka's figure-of-eight layout is unique in F1. The legendary 130R and the Esses are among the most spectacular sections in the sport.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Japan_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "losail",
+    name: "Lusail International Circuit",
+    location: "Lusail, Qatar",
+    country: "Qatar",
+    length: "5.419 km",
+    laps: 57,
+    distance: "308.611 km",
+    lapRecord: "1:24.319",
+    lapRecordHolder: "Max Verstappen",
+    lapRecordYear: 2023,
+    firstGP: 2021,
+    description: "Originally built for MotoGP, the sweeping Lusail circuit under floodlights in the Qatari desert creates a unique and visually stunning event.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Qatar_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "americas",
+    name: "Circuit of The Americas",
+    location: "Austin, Texas, USA",
+    country: "United States",
+    length: "5.513 km",
+    laps: 56,
+    distance: "308.405 km",
+    lapRecord: "1:36.169",
+    lapRecordHolder: "Charles Leclerc",
+    lapRecordYear: 2019,
+    firstGP: 2012,
+    description: "The first purpose-built F1 circuit in the USA incorporates elements from famous circuits worldwide. The blind uphill Turn 1 and flowing Esses are particular highlights.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/USA_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "rodriguez",
+    name: "Autodromo Hermanos Rodriguez",
+    location: "Mexico City, Mexico",
+    country: "Mexico",
+    length: "4.304 km",
+    laps: 71,
+    distance: "305.354 km",
+    lapRecord: "1:17.774",
+    lapRecordHolder: "Valtteri Bottas",
+    lapRecordYear: 2021,
+    firstGP: 1963,
+    description: "Located at 2,285 metres above sea level, Mexico City's thin air creates unique engineering challenges. The stadium section through the Foro Sol is electrifying.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Mexico_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "interlagos",
+    name: "Autodromo Jose Carlos Pace",
+    location: "São Paulo, Brazil",
+    country: "Brazil",
+    length: "4.309 km",
+    laps: 71,
+    distance: "305.879 km",
+    lapRecord: "1:10.540",
+    lapRecordHolder: "Valtteri Bottas",
+    lapRecordYear: 2018,
+    firstGP: 1973,
+    description: "Interlagos has produced some of the most dramatic races in F1 history. Anti-clockwise layout with gradient changes and unpredictable weather creates endless excitement.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Brazil_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "vegas",
+    name: "Las Vegas Strip Circuit",
+    location: "Las Vegas, Nevada, USA",
+    country: "United States",
+    length: "6.201 km",
+    laps: 50,
+    distance: "309.958 km",
+    lapRecord: "1:35.490",
+    lapRecordHolder: "Oscar Piastri",
+    lapRecordYear: 2023,
+    firstGP: 2023,
+    description: "The most glamorous race on the calendar. The Las Vegas Grand Prix takes place on the iconic Strip under the Nevada night sky past casinos and neon lights.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Las_Vegas_Circuit.png.transform/7col/image.png",
+  },
+  {
+    id: "yas_marina",
+    name: "Yas Marina Circuit",
+    location: "Abu Dhabi, UAE",
+    country: "UAE",
+    length: "5.281 km",
+    laps: 58,
+    distance: "306.183 km",
+    lapRecord: "1:26.103",
+    lapRecordHolder: "Max Verstappen",
+    lapRecordYear: 2021,
+    firstGP: 2009,
+    description: "The season finale venue. The circuit weaves between the marina and the iconic W Hotel, creating a spectacular nighttime backdrop for the last race of the year.",
+    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Abu_Dhabi_Circuit.png.transform/7col/image.png",
+  },
+];
+
+export default function TracksPage() {
+  return (
+    <main className="min-h-screen bg-black">
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-zinc-800">
+        <div className="h-1 w-full bg-red-600" />
+
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute left-1/4 top-0 bottom-0 w-px bg-zinc-800/50" />
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-800/50" />
+          <div className="absolute left-3/4 top-0 bottom-0 w-px bg-zinc-800/50" />
+        </div>
+
+        <div className="relative container mx-auto px-4 py-12">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white mb-8 transition-colors"
+          >
+            ← Home
+          </Link>
+
+          <div className="max-w-2xl">
+            <div className="text-xs font-black uppercase tracking-widest text-red-600 mb-3">
+              Formula 1 · 2025 Season
+            </div>
+            <h1
+              className="font-black uppercase text-white mb-4 leading-none"
+              style={{ fontSize: "clamp(3rem, 10vw, 7rem)" }}
+            >
+              Race
+              <br />
+              <span className="text-zinc-600">Circuits</span>
+            </h1>
+            <p className="text-zinc-400 text-base max-w-md">
+              Every circuit on the Formula 1 calendar — track statistics, lap records, and history.
+            </p>
+          </div>
+
+          <div className="mt-8 flex gap-8 text-center border-t border-zinc-800 pt-8">
+            <div>
+              <div className="text-3xl font-black text-white">{CIRCUITS.length}</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">Circuits</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-white">24</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">Races</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black text-white">21</div>
+              <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">Countries</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Circuit Grid */}
+      <div className="container mx-auto px-4 py-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-zinc-800">
+          {CIRCUITS.map((circuit) => (
+            <Link key={circuit.id} href={`/tracks/${circuit.id}`}>
+              <div className="bg-black p-6 h-full hover:bg-zinc-900 transition-colors group cursor-pointer">
+                <div className="h-px w-12 bg-red-600 mb-4 group-hover:w-full transition-all duration-300" />
+
+                {/* Track layout image */}
+                <div className="mb-4 bg-zinc-950 flex items-center justify-center h-32 overflow-hidden">
+                  <img
+                    src={circuit.layoutUrl}
+                    alt={`${circuit.name} layout`}
+                    className="h-full w-full object-contain p-2"
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="mb-3">
+                  <div className="text-xs font-bold uppercase tracking-widest text-zinc-600 mb-1">
+                    {circuit.location}
+                  </div>
+                  <h2 className="text-lg font-black text-white leading-tight group-hover:text-red-500 transition-colors">
+                    {circuit.name}
+                  </h2>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 border-t border-zinc-900 pt-4">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-zinc-700 mb-1">Length</div>
+                    <div className="text-sm font-black text-white">{circuit.length}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-zinc-700 mb-1">Laps</div>
+                    <div className="text-sm font-black text-white">{circuit.laps}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-zinc-700 mb-1">Since</div>
+                    <div className="text-sm font-black text-white">{circuit.firstGP}</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-widest text-zinc-700 mb-1">Lap Record</div>
+                    <div className="text-sm font-black text-red-500">{circuit.lapRecord}</div>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-zinc-700 group-hover:text-white transition-colors">
+                    View →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}

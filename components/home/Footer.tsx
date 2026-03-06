@@ -14,7 +14,7 @@ const Footer = () => {
               className="font-display font-black text-white text-xl leading-none select-none"
               style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 900, letterSpacing: "-0.01em" }}
             >
-              F1<span style={{ color: "#E10600" }}>DASH</span>
+              FJUAN<span style={{ color: "#E10600" }}>DASH</span>
             </span>
             <p className="text-white/35 text-[0.8125rem] mt-3 max-w-[220px] leading-relaxed">
               Comprehensive Formula 1 statistics and analytics platform.
@@ -56,7 +56,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-12 pt-6 border-t border-white/[0.05] flex items-center justify-between">
-          <span className="data-readout">© 2026 F1DASH</span>
+          <span className="data-readout">© 2026 FJUANDASH</span>
           <span className="data-readout">Not affiliated with Formula 1 or FIA</span>
         </div>
       </div>

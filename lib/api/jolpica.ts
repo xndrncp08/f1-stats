@@ -79,7 +79,7 @@ export async function getCurrentDriverStandings() {
 // Get all championships won by a driver (across all seasons)
 export async function getDriverChampionships(driverId: string) {
   const data = await fetchFromAPI<any>(
-    `/drivers/${driverId}/driverStandings/1.json`,
+`/drivers/${driverId}/driverStandings.json?limit=100`
   );
   return data.MRData.StandingsTable.StandingsLists || [];
 }

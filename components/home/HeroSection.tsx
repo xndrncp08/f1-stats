@@ -46,7 +46,7 @@ export default function HeroSection() {
           <div className="flex items-center gap-3 mb-8 animate-slide-up">
             <span className="label-overline">2026 Season</span>
             <div className="flex-1 h-px bg-white/10 max-w-[80px]" />
-            <span className="data-readout">Formula 1 Statistics</span>
+            <span className="data-readout">Formula 1</span>
           </div>
 
           {/* Main heading */}
@@ -60,7 +60,7 @@ export default function HeroSection() {
               lineHeight: 0.92,
             }}
           >
-            F1<span style={{ color: "#E10600" }}>DASH</span>
+            FJUAN<span style={{ color: "#E10600" }}>DASH</span>
           </h1>
 
           {/* Subtitle */}
