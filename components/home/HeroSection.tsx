@@ -60,7 +60,7 @@ export default function HeroSection() {
               lineHeight: 0.92,
             }}
           >
-            FJUAN<span style={{ color: "#E10600" }}>DASH</span>
+            F<span style={{ color: "#E10600" }}>JUAN</span>
           </h1>
 
           {/* Subtitle */}
