@@ -224,7 +224,7 @@ const CIRCUITS = [
     lapRecordYear: 2019,
     firstGP: 2017,
     description: "A stunning street circuit combining the longest straight in F1 with an incredibly tight castle section. Baku is notorious for dramatic late-race incidents and unexpected results.",
-    layoutUrl: "https://www.formula1.com/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Azerbaijan_Circuit.png.transform/7col/image.png",
+    layoutUrl: "https://media.formula1.com/image/upload/c_lfill,w_3392/q_auto/v1740000000/content/dam/fom-website/2018-redesign-assets/Circuit%20maps%2016x9/Baku_Circuit.webp",
   },
   {
     id: "marina_bay",
@@ -350,7 +350,7 @@ const CIRCUITS = [
 
 export default function TracksPage() {
   return (
-    <main className="min-h-screen bg-black">
+    <main className="min-h-screen" style={{ background: "#080808" }}>
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-zinc-800">
         <div className="h-1 w-full bg-red-600" />
