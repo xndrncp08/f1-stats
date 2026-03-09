@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
@@ -21,76 +19,67 @@ const Navbar = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <nav className="w-full sticky top-0 z-50">
-      <Card
-        className={`bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-800/95 backdrop-blur-xl border-zinc-700/50 overflow-hidden shadow-2xl rounded-none transition-all duration-500 ${
-          isScrolled ? "shadow-red-900/20" : ""
-        }`}
+      {/* Red top stripe */}
+      <div style={{ height: "2px", background: "#E10600", width: "100%" }} />
+
+      <div
+        style={{
+          background: isScrolled
+            ? "rgba(8,8,8,0.97)"
+            : "rgba(10,10,10,0.92)",
+          backdropFilter: "blur(16px)",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          transition: "background 0.3s ease",
+        }}
       >
-        {/* Carbon fiber texture overlay */}
-        <div
-          className={`absolute inset-0 transition-opacity duration-300 pointer-events-none ${
-            isScrolled ? "opacity-40" : "opacity-100"
-          }`}
-          style={{
-            backgroundImage: `
-              repeating-linear-gradient(
-                45deg,
-                rgba(0, 0, 0, 0.8) 0px,
-                rgba(0, 0, 0, 0.8) 1px,
-                rgba(40, 40, 40, 0.9) 1px,
-                rgba(40, 40, 40, 0.9) 2px,
-                rgba(0, 0, 0, 0.8) 2px,
-                rgba(0, 0, 0, 0.8) 3px,
-                rgba(60, 60, 60, 0.7) 3px,
-                rgba(60, 60, 60, 0.7) 4px
-              ),
-              repeating-linear-gradient(
-                -45deg,
-                rgba(0, 0, 0, 0.8) 0px,
-                rgba(0, 0, 0, 0.8) 1px,
-                rgba(40, 40, 40, 0.9) 1px,
-                rgba(40, 40, 40, 0.9) 2px,
-                rgba(0, 0, 0, 0.8) 2px,
-                rgba(0, 0, 0, 0.8) 3px,
-                rgba(60, 60, 60, 0.7) 3px,
-                rgba(60, 60, 60, 0.7) 4px
-              ),
-              linear-gradient(
-                180deg,
-                rgba(80, 80, 80, 0.15) 0%,
-                rgba(40, 40, 40, 0.2) 50%,
-                rgba(20, 20, 20, 0.25) 100%
-              )
-            `,
-          }}
-        />
+        <div className="max-w-7xl mx-auto px-4 md:px-6 flex items-center justify-between h-14">
 
-        {/* Top red stripe */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-red-600 to-transparent" />
-
-        <div className="relative flex items-center justify-between px-4 md:px-6 h-14">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-1">
-            <span className="text-white font-black text-xl tracking-tight">
-              FJuan
+          {/* Logo — pure type */}
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "baseline", gap: "0" }}>
+            <span
+              style={{
+                fontFamily: "'Russo One', sans-serif",
+                fontSize: "1.3rem",
+                color: "white",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+              }}
+            >
+              FJ
             </span>
-            <span className="text-red-600 font-black text-xl tracking-tight">
-              DASH
+            <span
+              style={{
+                fontFamily: "'Russo One', sans-serif",
+                fontSize: "1.3rem",
+                color: "#E10600",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+              }}
+            >
+              U
+            </span>
+            <span
+              style={{
+                fontFamily: "'Russo One', sans-serif",
+                fontSize: "1.3rem",
+                color: "white",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+              }}
+            >
+              AN
             </span>
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-0">
             {NAV_LINKS.map((link) => {
               const isActive =
                 link.href === "/"
@@ -100,14 +89,24 @@ const Navbar = () => {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-3 py-1.5 text-xs font-bold uppercase tracking-widest transition-colors relative ${
-                    isActive ? "text-white" : "text-zinc-500 hover:text-white"
-                  }`}
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: isActive ? "white" : "rgba(255,255,255,0.4)",
+                    padding: "0 14px",
+                    height: "56px",
+                    display: "flex",
+                    alignItems: "center",
+                    position: "relative",
+                    textDecoration: "none",
+                    transition: "color 0.15s ease",
+                    borderBottom: isActive ? "2px solid #E10600" : "2px solid transparent",
+                  }}
                 >
                   {link.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-red-600" />
-                  )}
                 </Link>
               );
             })}
@@ -115,31 +114,32 @@ const Navbar = () => {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex flex-col gap-1.5 p-2"
+            className="md:hidden flex flex-col justify-center gap-[5px] p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle menu"
+            style={{ background: "none", border: "none", cursor: "pointer" }}
           >
-            <span
-              className={`block h-0.5 w-5 bg-white transition-transform ${
-                isMobileMenuOpen ? "rotate-45 translate-y-2" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-5 bg-white transition-opacity ${
-                isMobileMenuOpen ? "opacity-0" : ""
-              }`}
-            />
-            <span
-              className={`block h-0.5 w-5 bg-white transition-transform ${
-                isMobileMenuOpen ? "-rotate-45 -translate-y-2" : ""
-              }`}
-            />
+            <span style={{
+              display: "block", height: "2px", width: "22px", background: "white",
+              transition: "transform 0.2s ease",
+              transform: isMobileMenuOpen ? "rotate(45deg) translate(5px, 5px)" : "none",
+            }} />
+            <span style={{
+              display: "block", height: "2px", width: "22px", background: "white",
+              transition: "opacity 0.2s ease",
+              opacity: isMobileMenuOpen ? 0 : 1,
+            }} />
+            <span style={{
+              display: "block", height: "2px", width: "22px", background: "white",
+              transition: "transform 0.2s ease",
+              transform: isMobileMenuOpen ? "rotate(-45deg) translate(5px, -5px)" : "none",
+            }} />
           </button>
         </div>
 
         {/* Mobile menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden relative border-t border-zinc-800">
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             {NAV_LINKS.map((link) => {
               const isActive =
                 link.href === "/"
@@ -150,14 +150,24 @@ const Navbar = () => {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center px-6 py-3 text-sm font-bold uppercase tracking-widest border-b border-zinc-900 ${
-                    isActive
-                      ? "text-red-500 bg-zinc-900/50"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-900/30"
-                  }`}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    padding: "14px 24px",
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: isActive ? "white" : "rgba(255,255,255,0.4)",
+                    textDecoration: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: isActive ? "rgba(225,6,0,0.06)" : "transparent",
+                  }}
                 >
                   {isActive && (
-                    <span className="w-1 h-4 bg-red-600 mr-3 flex-shrink-0" />
+                    <span style={{ width: "3px", height: "16px", background: "#E10600", flexShrink: 0 }} />
                   )}
                   {link.label}
                 </Link>
@@ -165,7 +175,7 @@ const Navbar = () => {
             })}
           </div>
         )}
-      </Card>
+      </div>
     </nav>
   );
 };

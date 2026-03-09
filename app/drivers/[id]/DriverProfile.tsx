@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import championshipData from "@/lib/data/championships.json";
 
 const TEAM_COLORS: Record<string, string> = {
   mercedes: "#00D2BE",
@@ -15,7 +16,6 @@ const TEAM_COLORS: Record<string, string> = {
   sauber: "#52E252",
   rb: "#6692FF",
   alphatauri: "#6692FF",
-  "alfa romeo": "#C92D4B",
   renault: "#FFF500",
 };
 
@@ -27,33 +27,32 @@ function getTeamColor(teamName: string): string {
   return "#E10600";
 }
 
-function StatBox({
-  label,
-  value,
-  accent = false,
-}: {
-  label: string;
-  value: string | number;
-  accent?: boolean;
-}) {
-  return (
-    <div className="bg-black border border-zinc-800 p-4 hover:border-zinc-600 transition-colors">
-      <div className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-1">
-        {label}
-      </div>
-      <div
-        className={`text-2xl font-black ${accent ? "text-red-500" : "text-white"}`}
-      >
-        {value}
-      </div>
-    </div>
-  );
-}
-
 async function fetchJSON(url: string) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
+}
+
+// Fetch ALL pages of results from Jolpica
+async function fetchAllResults(driverId: string) {
+  const pageSize = 100;
+  let offset = 0;
+  let allRaces: any[] = [];
+  let total = Infinity;
+
+  while (offset < total) {
+    const data = await fetchJSON(
+      `https://api.jolpi.ca/ergast/f1/drivers/${driverId}/results.json?limit=${pageSize}&offset=${offset}`,
+    );
+    const mrData = data?.MRData;
+    total = parseInt(mrData?.total || "0");
+    const races = mrData?.RaceTable?.Races || [];
+    allRaces = [...allRaces, ...races];
+    offset += pageSize;
+    if (races.length === 0) break;
+  }
+
+  return allRaces;
 }
 
 export default function DriverProfile({ driverId }: { driverId: string }) {
@@ -65,31 +64,13 @@ export default function DriverProfile({ driverId }: { driverId: string }) {
 
     async function load() {
       try {
-        console.log("[DriverProfile] fetching:", driverId);
-
-        // Step 1: fast requests only - no bulk career data
-        const [driverRes, standingsRes, champRes, seasonRes] =
-          await Promise.allSettled([
-            fetchJSON(
-              `https://api.jolpi.ca/ergast/f1/drivers/${driverId}.json`,
-            ),
-            fetchJSON(
-              `https://api.jolpi.ca/ergast/f1/2025/driverStandings.json`,
-            ),
-            fetchJSON(
-              `https://api.jolpi.ca/ergast/f1/drivers/${driverId}/driverStandings.json?limit=100`,
-            ),
-            fetchJSON(
-              `https://api.jolpi.ca/ergast/f1/2025/drivers/${driverId}/results.json`,
-            ),
-          ]);
-
-        console.log("[DriverProfile] statuses:", {
-          driver: driverRes.status,
-          standings: standingsRes.status,
-          champ: champRes.status,
-          season: seasonRes.status,
-        });
+        const [driverRes, standingsRes, seasonRes] = await Promise.allSettled([
+          fetchJSON(`https://api.jolpi.ca/ergast/f1/drivers/${driverId}.json`),
+          fetchJSON(`https://api.jolpi.ca/ergast/f1/2025/driverstandings.json`),
+          fetchJSON(
+            `https://api.jolpi.ca/ergast/f1/2025/drivers/${driverId}/results.json`,
+          ),
+        ]);
 
         const driver =
           driverRes.status === "fulfilled"
@@ -109,64 +90,43 @@ export default function DriverProfile({ driverId }: { driverId: string }) {
         const standing =
           allStandings.find((s: any) => s.Driver.driverId === driverId) || null;
 
-        const champSeasons =
-          champRes.status === "fulfilled"
-            ? champRes.value?.MRData?.StandingsTable?.StandingsLists || []
-            : [];
-        const championships = champSeasons.filter(
-          (s: any) => s.DriverStandings?.[0]?.position === "1",
-        ).length;
-
-        const seasonRaces =
+        const seasonResults =
           seasonRes.status === "fulfilled"
             ? seasonRes.value?.MRData?.RaceTable?.Races || []
             : [];
 
-        // Step 2: get wins count (separate smaller request)
-        let wins = 0;
-        try {
-          const winsRes = await fetchJSON(
-            `https://api.jolpi.ca/ergast/f1/drivers/${driverId}/results/1.json?limit=1`,
-          );
-          wins = parseInt(winsRes?.MRData?.total || "0");
-        } catch (_) {}
+        // Fetch ALL career results with pagination
+        const allRaces = await fetchAllResults(driverId);
 
-        // Step 3: get total races count
-        let totalRaces = 0;
-        let firstSeason = "—";
-        try {
-          const racesRes = await fetchJSON(
-            `https://api.jolpi.ca/ergast/f1/drivers/${driverId}/results.json?limit=1&offset=0`,
-          );
-          totalRaces = parseInt(racesRes?.MRData?.total || "0");
-          firstSeason = racesRes?.MRData?.RaceTable?.Races?.[0]?.season || "—";
-        } catch (_) {}
-
-        // Step 4: podiums
-        let podiums = 0;
-        try {
-          const podRes = await fetchJSON(
-            `https://api.jolpi.ca/ergast/f1/drivers/${driverId}/results.json?limit=1&offset=0`,
-          );
-          // We can't get podiums count from total easily, skip for now
-          podiums = 0;
-        } catch (_) {}
+        const totalRaces = allRaces.length;
+        const firstSeason = allRaces[0]?.season || "—";
+        const wins = allRaces.filter(
+          (r: any) => r.Results?.[0]?.position === "1",
+        ).length;
+        const podiums = allRaces.filter((r: any) => {
+          const pos = parseInt(r.Results?.[0]?.position);
+          return pos >= 1 && pos <= 3;
+        }).length;
+        const points = allRaces.reduce((sum: number, r: any) => {
+          return sum + parseFloat(r.Results?.[0]?.points || "0");
+        }, 0);
+        const championships =
+          (championshipData as Record<string, number>)[driverId] ?? 0;
 
         setData({
           driver,
           standing,
+          seasonResults,
           careerStats: {
             totalRaces,
             wins,
             podiums,
+            points,
             championships,
-            poles: 0,
             firstSeason,
           },
-          seasonResults: seasonRaces,
         });
       } catch (err: any) {
-        console.error("[DriverProfile] error:", err);
         setError(err.message || "Failed to load");
       }
     }
@@ -174,229 +134,501 @@ export default function DriverProfile({ driverId }: { driverId: string }) {
     load();
   }, [driverId]);
 
-  if (error) {
+  if (error)
     return (
-      <main className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 font-bold mb-4">{error}</p>
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#080808",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <p
+            style={{
+              color: "#E10600",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              marginBottom: "1rem",
+            }}
+          >
+            {error}
+          </p>
           <Link
             href="/drivers"
-            className="text-zinc-400 hover:text-white text-sm underline"
+            style={{
+              color: "rgba(255,255,255,0.4)",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontSize: "0.8rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+            }}
           >
             ← Back to Drivers
           </Link>
         </div>
       </main>
     );
-  }
 
-  if (!data) {
+  if (!data)
     return (
-      <main className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-2 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest">
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#080808",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <div
+            style={{
+              width: "36px",
+              height: "36px",
+              border: "2px solid #E10600",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+              margin: "0 auto 1rem",
+            }}
+          />
+          <p
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
+            }}
+          >
             Loading Driver
           </p>
         </div>
       </main>
     );
-  }
 
   const { driver, standing, careerStats, seasonResults } = data;
   const teamName = standing?.Constructors?.[0]?.name || "Unknown Team";
   const teamColor = getTeamColor(teamName);
 
   return (
-    <main className="min-h-screen bg-black">
-      <div className="h-1 w-full" style={{ backgroundColor: teamColor }} />
+    <main style={{ minHeight: "100vh", background: "#080808" }}>
+      {/* Team color top stripe */}
+      <div style={{ height: "3px", background: teamColor }} />
 
-      <section className="relative overflow-hidden border-b border-zinc-800">
+      {/* Hero */}
+      <section
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Number watermark */}
         <div
-          className="absolute right-0 top-0 bottom-0 flex items-center pr-8 pointer-events-none select-none overflow-hidden"
-          aria-hidden
+          style={{
+            position: "absolute",
+            right: "2rem",
+            top: 0,
+            bottom: 0,
+            display: "flex",
+            alignItems: "center",
+            pointerEvents: "none",
+            userSelect: "none",
+          }}
         >
           <span
-            className="font-black leading-none"
             style={{
-              fontSize: "clamp(8rem, 20vw, 18rem)",
-              color: teamColor,
-              opacity: 0.06,
+              fontFamily: "'Russo One', sans-serif",
+              fontSize: "clamp(8rem, 20vw, 16rem)",
+              color: "rgba(255,255,255,0.025)",
+              lineHeight: 1,
             }}
           >
-            {driver.permanentNumber || "?"}
+            {driver.permanentNumber || "0"}
           </span>
         </div>
 
-        <div className="relative container mx-auto px-4 py-12">
+        <div
+          style={{
+            maxWidth: "1280px",
+            margin: "0 auto",
+            padding: "3rem 1.5rem",
+          }}
+        >
           <Link
             href="/drivers"
-            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-white mb-8 transition-colors"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "2rem",
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
+              textDecoration: "none",
+            }}
           >
             ← Drivers
           </Link>
 
-          <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-12">
-            <div>
-              <div
-                className="inline-block px-3 py-1 text-xs font-black uppercase tracking-widest mb-4"
-                style={{ backgroundColor: teamColor, color: "#000" }}
-              >
-                #{driver.permanentNumber || "—"}
-              </div>
-              <div className="mb-2">
-                <span className="block text-zinc-400 text-lg font-bold">
-                  {driver.givenName}
-                </span>
-                <span
-                  className="block font-black uppercase leading-none text-white"
-                  style={{ fontSize: "clamp(2.5rem, 8vw, 5rem)" }}
-                >
-                  {driver.familyName}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500 font-bold">
-                <span className="uppercase tracking-widest">
-                  {driver.nationality}
-                </span>
-                <span className="text-zinc-700">·</span>
-                <span style={{ color: teamColor }}>{teamName}</span>
-                {driver.dateOfBirth && (
-                  <>
-                    <span className="text-zinc-700">·</span>
-                    <span>
-                      Born{" "}
-                      {new Date(driver.dateOfBirth).toLocaleDateString(
-                        "en-US",
-                        { year: "numeric", month: "long", day: "numeric" },
-                      )}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
+          {/* Number badge */}
+          <div
+            style={{
+              display: "inline-block",
+              padding: "0.2rem 0.75rem",
+              marginBottom: "1rem",
+              background: teamColor,
+              fontFamily: "'Russo One', sans-serif",
+              fontSize: "0.85rem",
+              color: "#000",
+            }}
+          >
+            #{driver.permanentNumber || "—"}
+          </div>
 
-            {standing && (
-              <div className="flex gap-6 md:ml-auto">
-                <div className="text-center">
-                  <div
-                    className="text-4xl font-black"
-                    style={{ color: teamColor }}
-                  >
-                    {standing.position}
-                  </div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    Position
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-black text-white">
-                    {standing.points}
-                  </div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    Points
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-black text-white">
-                    {standing.wins}
-                  </div>
-                  <div className="text-xs font-bold uppercase tracking-widest text-zinc-600">
-                    Wins
-                  </div>
-                </div>
-              </div>
+          <div style={{ marginBottom: "1rem" }}>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 500,
+                fontSize: "1.25rem",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              {driver.givenName}
+            </span>
+            <span
+              style={{
+                display: "block",
+                fontFamily: "'Russo One', sans-serif",
+                fontSize: "clamp(2.5rem, 8vw, 5rem)",
+                color: "white",
+                lineHeight: 0.92,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {driver.familyName.toUpperCase()}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.5rem 1.5rem",
+              alignItems: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 600,
+                fontSize: "0.8rem",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.35)",
+              }}
+            >
+              {driver.nationality}
+            </span>
+            <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 600,
+                fontSize: "0.8rem",
+                letterSpacing: "0.1em",
+                color: teamColor,
+              }}
+            >
+              {teamName}
+            </span>
+            {driver.dateOfBirth && (
+              <>
+                <span style={{ color: "rgba(255,255,255,0.1)" }}>·</span>
+                <span
+                  style={{
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontSize: "0.75rem",
+                    color: "rgba(255,255,255,0.3)",
+                  }}
+                >
+                  b.{" "}
+                  {new Date(driver.dateOfBirth).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              </>
             )}
           </div>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 py-10 space-y-10">
-        <section>
-          <h2 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">
+      <div
+        style={{ maxWidth: "1280px", margin: "0 auto", padding: "3rem 1.5rem" }}
+      >
+        {/* Career stats */}
+        <div style={{ marginBottom: "0.5rem" }}>
+          <span
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.68rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.25)",
+            }}
+          >
             Career Statistics
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-zinc-800">
-            <StatBox
-              label="Championships"
-              value={careerStats.championships}
-              accent
-            />
-            <StatBox label="Race Wins" value={careerStats.wins} />
-            <StatBox label="Total Races" value={careerStats.totalRaces} />
-            <StatBox label="Active Since" value={careerStats.firstSeason} />
-            <StatBox label="2025 Position" value={standing?.position || "—"} />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">
-            2025 Season Results
-          </h2>
-          {seasonResults.length > 0 ? (
-            <div className="border border-zinc-800">
-              <div className="grid grid-cols-12 gap-4 px-4 py-2 border-b border-zinc-800 bg-zinc-900/50">
-                <div className="col-span-1 text-xs font-bold uppercase tracking-widest text-zinc-600">
-                  Rd
-                </div>
-                <div className="col-span-5 text-xs font-bold uppercase tracking-widest text-zinc-600">
-                  Race
-                </div>
-                <div className="col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-600 text-center">
-                  Grid
-                </div>
-                <div className="col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-600 text-center">
-                  Finish
-                </div>
-                <div className="col-span-2 text-xs font-bold uppercase tracking-widest text-zinc-600 text-right">
-                  Pts
-                </div>
+          </span>
+        </div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(6, 1fr)",
+            background: "rgba(255,255,255,0.05)",
+            marginBottom: "2rem",
+          }}
+          className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+        >
+          {[
+            {
+              label: "Championships",
+              value: careerStats.championships,
+              accent: true,
+            },
+            { label: "Race Wins", value: careerStats.wins },
+            { label: "Podiums", value: careerStats.podiums },
+            { label: "Total Points", value: Math.round(careerStats.points) },
+            { label: "Total Races", value: careerStats.totalRaces },
+            { label: "Active Since", value: careerStats.firstSeason },
+          ].map((s, i) => (
+            <div
+              key={s.label}
+              style={{
+                background: "#0a0a0a",
+                padding: "1.25rem 1.5rem",
+                borderRight:
+                  i < 5 ? "1px solid rgba(255,255,255,0.05)" : "none",
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "0.62rem",
+                  letterSpacing: "0.16em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.25)",
+                  marginBottom: "0.3rem",
+                }}
+              >
+                {s.label}
               </div>
-              {seasonResults.map((race: any) => {
-                const result = race.Results?.[0];
-                const pos = parseInt(result?.position);
-                const isWin = pos === 1;
-                const isPodium = pos <= 3;
-                return (
+              <div
+                style={{
+                  fontFamily: "'Russo One', sans-serif",
+                  fontSize: "1.5rem",
+                  color: s.accent ? "#E10600" : "white",
+                  lineHeight: 1,
+                }}
+              >
+                {s.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 2025 Season Results */}
+        <div style={{ marginBottom: "0.5rem" }}>
+          <span
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.68rem",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.25)",
+            }}
+          >
+            2025 Season Results
+          </span>
+        </div>
+        {seasonResults.length > 0 ? (
+          <div style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
+            {/* Header */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem",
+                padding: "0.6rem 1.25rem",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                background: "#0d0d0d",
+              }}
+            >
+              {["Rd", "Race", "Grid", "Finish", "Pts"].map((h) => (
+                <div
+                  key={h}
+                  style={{
+                    fontFamily: "'Rajdhani', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "0.62rem",
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.2)",
+                    textAlign:
+                      h === "Rd" ? "left" : h === "Race" ? "left" : "center",
+                  }}
+                >
+                  {h}
+                </div>
+              ))}
+            </div>
+            {seasonResults.map((race: any) => {
+              const result = race.Results?.[0];
+              const pos = parseInt(result?.position);
+              const isWin = pos === 1;
+              const isPodium = pos <= 3;
+              return (
+                <div
+                  key={race.round}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "3rem 1fr 5rem 5rem 5rem",
+                    padding: "0.75rem 1.25rem",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: "transparent",
+                  }}
+                >
                   <div
-                    key={race.round}
-                    className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-zinc-900 hover:bg-zinc-900/40 transition-colors"
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.25)",
+                    }}
                   >
-                    <div className="col-span-1 text-sm font-bold text-zinc-600">
-                      {race.round}
+                    {race.round}
+                  </div>
+                  <div>
+                    <div
+                      style={{
+                        fontFamily: "'Russo One', sans-serif",
+                        fontSize: "0.82rem",
+                        color: "white",
+                      }}
+                    >
+                      {race.raceName}
                     </div>
-                    <div className="col-span-5">
-                      <div className="text-sm font-bold text-white leading-tight">
-                        {race.raceName}
-                      </div>
-                      <div className="text-xs text-zinc-600">
-                        {race.Circuit?.Location?.country}
-                      </div>
-                    </div>
-                    <div className="col-span-2 text-center text-sm font-bold text-zinc-400">
-                      {result?.grid || "—"}
-                    </div>
-                    <div className="col-span-2 text-center">
-                      <span
-                        className={`text-sm font-black ${isWin ? "text-yellow-400" : isPodium ? "text-orange-400" : "text-white"}`}
-                      >
-                        {result?.position || result?.status || "—"}
-                      </span>
-                    </div>
-                    <div className="col-span-2 text-right text-sm font-bold text-zinc-300">
-                      {result?.points || "0"}
+                    <div
+                      style={{
+                        fontFamily: "'Rajdhani', sans-serif",
+                        fontSize: "0.7rem",
+                        color: "rgba(255,255,255,0.25)",
+                        letterSpacing: "0.08em",
+                      }}
+                    >
+                      {race.Circuit?.Location?.country}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="border border-zinc-800 p-8 text-center text-zinc-600 font-bold">
-              No 2025 season data available yet
-            </div>
-          )}
-        </section>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "0.8rem",
+                      color: "rgba(255,255,255,0.4)",
+                      textAlign: "center",
+                    }}
+                  >
+                    {result?.grid || "—"}
+                  </div>
+                  <div style={{ textAlign: "center" }}>
+                    <span
+                      style={{
+                        fontFamily: "'Russo One', sans-serif",
+                        fontSize: "0.85rem",
+                        color: isWin
+                          ? "#FFD700"
+                          : isPodium
+                            ? "#FF8C00"
+                            : "white",
+                      }}
+                    >
+                      {result?.position || result?.status || "—"}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: "'JetBrains Mono', monospace",
+                      fontSize: "0.8rem",
+                      color: "rgba(255,255,255,0.5)",
+                      textAlign: "center",
+                    }}
+                  >
+                    {result?.points || "0"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            style={{
+              border: "1px solid rgba(255,255,255,0.06)",
+              padding: "3rem",
+              textAlign: "center",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Rajdhani', sans-serif",
+                fontWeight: 600,
+                fontSize: "0.8rem",
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.2)",
+              }}
+            >
+              No 2025 season data available
+            </span>
+          </div>
+        )}
+
+        {/* Back */}
+        <div
+          style={{
+            marginTop: "3rem",
+            paddingTop: "1.5rem",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <Link
+            href="/drivers"
+            style={{
+              fontFamily: "'Rajdhani', sans-serif",
+              fontWeight: 600,
+              fontSize: "0.75rem",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: "rgba(255,255,255,0.3)",
+              textDecoration: "none",
+            }}
+          >
+            ← Back to Drivers
+          </Link>
+        </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </main>
   );
 }
