@@ -7,12 +7,11 @@ import {
   DriverRaceResult,
   SeasonResult,
 } from "../types/driver";
-import { calculateDriverStats } from "../utils/calculations";
 import championshipData from "../data/championships.json";
 
 const BASE_URL = "https://api.jolpi.ca/ergast/f1";
 
-// Fetch ALL paginated results for a driver
+// Fetch ALL paginated results for a driver - handles Hamilton's 350+ races
 async function fetchAllDriverResults(driverId: string): Promise<any[]> {
   const pageSize = 100;
   let offset = 0;
@@ -22,6 +21,31 @@ async function fetchAllDriverResults(driverId: string): Promise<any[]> {
   while (offset < total) {
     const res = await fetch(
       `${BASE_URL}/drivers/${driverId}/results.json?limit=${pageSize}&offset=${offset}`,
+      { next: { revalidate: 300 } }
+    );
+    if (!res.ok) break;
+    const data = await res.json();
+    const mrData = data?.MRData;
+    total = parseInt(mrData?.total || "0");
+    const races = mrData?.RaceTable?.Races || [];
+    allRaces = [...allRaces, ...races];
+    offset += pageSize;
+    if (races.length === 0) break;
+  }
+
+  return allRaces;
+}
+
+// Fetch ALL career qualifying results for pole positions
+async function fetchAllDriverQualifying(driverId: string): Promise<any[]> {
+  const pageSize = 100;
+  let offset = 0;
+  let allRaces: any[] = [];
+  let total = Infinity;
+
+  while (offset < total) {
+    const res = await fetch(
+      `${BASE_URL}/drivers/${driverId}/qualifying.json?limit=${pageSize}&offset=${offset}`,
       { next: { revalidate: 300 } }
     );
     if (!res.ok) break;
@@ -47,73 +71,108 @@ export async function getCurrentStandings(): Promise<any[]> {
 
 export async function getDriverStats(driverId: string): Promise<DriverStats | null> {
   try {
-    const [driver, qualifying, fastestLaps, currentStandings] =
+    // Fetch driver info, standings, and all career data in parallel
+    const [driverRes, currentStandingsRes, fastestLapsRes] =
       await Promise.allSettled([
         jolpica.getDriver(driverId),
-        jolpica.getDriverQualifying(driverId, "current"),
-        jolpica.getDriverFastestLaps(driverId),
         jolpica.getCurrentDriverStandings(),
+        jolpica.getDriverFastestLaps(driverId),
       ]);
 
-    const driverData = driver.status === "fulfilled" ? driver.value : null;
+    const driverData = driverRes.status === "fulfilled" ? driverRes.value : null;
     if (!driverData) return null;
 
-    const qual = qualifying.status === "fulfilled" ? qualifying.value : [];
-    const fastest = fastestLaps.status === "fulfilled" ? fastestLaps.value : [];
-    const standings = currentStandings.status === "fulfilled" ? currentStandings.value : [];
+    const standings = currentStandingsRes.status === "fulfilled" ? currentStandingsRes.value : [];
+    const fastestLaps = fastestLapsRes.status === "fulfilled" ? fastestLapsRes.value : [];
 
-    // Fetch ALL career results with pagination
-    const allRaces = await fetchAllDriverResults(driverId);
+    // Fetch ALL career results and qualifying with pagination (sequential to avoid rate limits)
+    const [allRaces, allQualifying] = await Promise.all([
+      fetchAllDriverResults(driverId),
+      fetchAllDriverQualifying(driverId),
+    ]);
 
-    const allResults: DriverRaceResult[] = [];
+    // Calculate career stats from full result set
+    const totalRaces = allRaces.length;
+    const firstSeason = allRaces[0]?.season || "Unknown";
+    const lastSeason = allRaces[allRaces.length - 1]?.season || "Unknown";
+    const yearsActive = parseInt(lastSeason) - parseInt(firstSeason);
+
+    let totalWins = 0;
+    let totalPodiums = 0;
+    let totalPoints = 0;
+    let dnfCount = 0;
+    const finishPositions: number[] = [];
+
     allRaces.forEach((race: any) => {
-      if (race.Results?.length) {
-        allResults.push({
-          ...race.Results[0],
-          season: race.season,
-          round: race.round,
-          raceName: race.raceName,
-        });
-      }
+      const result = race.Results?.[0];
+      if (!result) return;
+
+      const pos = parseInt(result.position);
+      const pts = parseFloat(result.points || "0");
+      const status: string = result.status || "";
+
+      totalPoints += pts;
+      if (pos === 1) totalWins++;
+      if (pos >= 1 && pos <= 3) totalPodiums++;
+      if (pos > 0) finishPositions.push(pos);
+      if (!status.includes("Finished") && !status.includes("Lap")) dnfCount++;
     });
 
-    const stats = calculateDriverStats(allResults, driverId);
+    const avgFinishPosition =
+      finishPositions.length > 0
+        ? finishPositions.reduce((a, b) => a + b, 0) / finishPositions.length
+        : 0;
 
-    const polePositions = qual.filter(
-      (q: any) => q.QualifyingResults?.[0]?.position === "1"
+    const bestFinish = finishPositions.length > 0 ? Math.min(...finishPositions) : 0;
+    const worstFinish = finishPositions.length > 0 ? Math.max(...finishPositions) : 0;
+    const winRate = totalRaces > 0 ? (totalWins / totalRaces) * 100 : 0;
+    const podiumRate = totalRaces > 0 ? (totalPodiums / totalRaces) * 100 : 0;
+    const retirementRate = totalRaces > 0 ? (dnfCount / totalRaces) * 100 : 0;
+    const pointsPerRace = totalRaces > 0 ? totalPoints / totalRaces : 0;
+
+    // Career poles from full qualifying history
+    const totalPoles = allQualifying.filter(
+      (race: any) => race.QualifyingResults?.[0]?.position === "1"
     ).length;
 
-    // Championships from static JSON — accurate and instant
-    const championships = (championshipData as Record<string, number>)[driverId] ?? 0;
+    // Championships from static JSON — accurate and never changes
+    const totalChampionships = (championshipData as Record<string, number>)[driverId] ?? 0;
 
-    // Wins from full results
-    const totalWins = allResults.filter(r => r.position === "1").length;
+    // Season-by-season breakdown
+    const seasonMap = new Map<string, { wins: number; podiums: number; points: number; races: number; team: string }>();
+    allRaces.forEach((race: any) => {
+      const result = race.Results?.[0];
+      if (!result) return;
+      const season = race.season;
+      const pos = parseInt(result.position);
+      const pts = parseFloat(result.points || "0");
+      const team = result.Constructor?.name || "Unknown";
 
-    // Season breakdown
-    const seasonMap = new Map<string, DriverRaceResult[]>();
-    allResults.forEach((result) => {
-      if (!seasonMap.has(result.season)) seasonMap.set(result.season, []);
-      seasonMap.get(result.season)!.push(result);
+      if (!seasonMap.has(season)) {
+        seasonMap.set(season, { wins: 0, podiums: 0, points: 0, races: 0, team });
+      }
+      const s = seasonMap.get(season)!;
+      s.races++;
+      s.points += pts;
+      s.team = team; // last team of season
+      if (pos === 1) s.wins++;
+      if (pos >= 1 && pos <= 3) s.podiums++;
     });
 
     const seasonResults: SeasonResult[] = Array.from(seasonMap.entries())
-      .map(([season, results]) => {
-        const seasonStats = calculateDriverStats(results, driverId);
-        const team = results[results.length - 1]?.Constructor?.name || "Unknown";
-        return {
-          season,
-          team,
-          races: seasonStats.totalRaces || 0,
-          wins: seasonStats.totalWins || 0,
-          podiums: seasonStats.totalPodiums || 0,
-          poles: 0,
-          points: seasonStats.totalPoints || 0,
-          position: 0,
-        };
-      })
+      .map(([season, s]) => ({
+        season,
+        team: s.team,
+        races: s.races,
+        wins: s.wins,
+        podiums: s.podiums,
+        poles: 0,
+        points: s.points,
+        position: 0,
+      }))
       .sort((a, b) => parseInt(b.season) - parseInt(a.season));
 
-    // Current team
+    // Current team from standings or last race
     let currentTeam: Constructor | undefined;
     const currentStanding = standings.find(
       (s: any) => s.Driver.driverId === driverId
@@ -121,33 +180,33 @@ export async function getDriverStats(driverId: string): Promise<DriverStats | nu
     if (currentStanding?.Constructors?.[0]) {
       currentTeam = currentStanding.Constructors[0];
     }
-    if (!currentTeam && allResults.length > 0) {
-      currentTeam = allResults[allResults.length - 1]?.Constructor;
+    if (!currentTeam && allRaces.length > 0) {
+      currentTeam = allRaces[allRaces.length - 1]?.Results?.[0]?.Constructor;
     }
 
     return {
       driver: driverData,
-      totalRaces: stats.totalRaces || 0,
+      totalRaces,
       totalWins,
-      totalPodiums: stats.totalPodiums || 0,
-      totalPoles: polePositions,
-      totalFastestLaps: fastest.length,
-      totalPoints: stats.totalPoints || 0,
-      totalChampionships: championships,
-      dnfCount: stats.dnfCount || 0,
-      retirementRate: stats.retirementRate || 0,
-      avgFinishPosition: stats.avgFinishPosition || 0,
-      avgQualifyingPosition: stats.avgQualifyingPosition || 0,
-      bestFinish: stats.bestFinish || 0,
-      worstFinish: stats.worstFinish || 0,
-      pointsPerRace: stats.pointsPerRace || 0,
-      winRate: stats.winRate || 0,
-      podiumRate: stats.podiumRate || 0,
+      totalPodiums,
+      totalPoles,
+      totalFastestLaps: fastestLaps.length,
+      totalPoints: Math.round(totalPoints * 10) / 10,
+      totalChampionships,
+      dnfCount,
+      retirementRate,
+      avgFinishPosition: Math.round(avgFinishPosition * 10) / 10,
+      avgQualifyingPosition: 0,
+      bestFinish,
+      worstFinish,
+      pointsPerRace: Math.round(pointsPerRace * 100) / 100,
+      winRate: Math.round(winRate * 10) / 10,
+      podiumRate: Math.round(podiumRate * 10) / 10,
       currentTeam,
       careerSpan: {
         firstRace: allRaces[0]?.raceName || "Unknown",
         lastRace: allRaces[allRaces.length - 1]?.raceName || "Unknown",
-        yearsActive: new Date().getFullYear() - parseInt(allRaces[0]?.season || "0"),
+        yearsActive,
       },
       seasonResults,
     };
